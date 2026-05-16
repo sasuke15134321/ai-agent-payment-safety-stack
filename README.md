@@ -179,13 +179,16 @@ All four APIs support x402 payment headers, return `next_recommended` in respons
 
 ## Repositories
 
-| API / Project | GitHub | Demo URL | OpenAPI |
-|---------------|--------|----------|---------|
-| Agent Budget Guard | [agent-budget-guard](https://github.com/sasuke15134321/agent-budget-guard) | https://agent-budget-guard.onrender.com | /openapi.json |
-| Agent Security Gateway | [agent-security-gateway](https://github.com/sasuke15134321/agent-security-gateway) | https://agent-security-gateway.onrender.com | /openapi.json |
-| Agent Memory API | [agent-memory-api](https://github.com/sasuke15134321/agent-memory-api) | https://agent-memory-api-bix5.onrender.com | /openapi.json |
-| Agent Evolution Engine | [agent-evolution-engine](https://github.com/sasuke15134321/agent-evolution-engine) | https://agent-evolution-engine.onrender.com | /openapi.json |
-| Agent Memory Consensus | [agent-memory-consensus](https://github.com/sasuke15134321/agent-memory-consensus) | — | openapi.yaml |
+| API / Project | Status | Repository | Demo |
+|---|---|---|---|
+| Agent Budget Guard | Working prototype | https://github.com/sasuke15134321/agent-budget-guard | https://agent-budget-guard.onrender.com |
+| Agent Security Gateway | Working prototype | https://github.com/sasuke15134321/agent-security-gateway | https://agent-security-gateway.onrender.com |
+| Agent Memory API | Working prototype | https://github.com/sasuke15134321/agent-memory-api | https://agent-memory-api-bix5.onrender.com |
+| Agent Evolution Engine | Working prototype | https://github.com/sasuke15134321/agent-evolution-engine | https://agent-evolution-engine.onrender.com |
+| Agent Memory Consensus | Experimental contract | https://github.com/sasuke15134321/agent-memory-consensus | Not deployed |
+
+Demo URLs will be added only when each API has meaningful runtime behavior.
+Experimental contracts may remain repository-only until implementation is ready.
 
 ---
 
