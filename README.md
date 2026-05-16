@@ -4,6 +4,14 @@ A stack of APIs for AI agents that call paid APIs, make x402 payments, store mem
 
 ---
 
+## Disclaimer
+
+This is an independent experimental project.
+It is not officially affiliated with JPYC, Circle, Arc, Kaia, or OpenAI.
+The goal is to explore control layers for AI agents that may use paid APIs, x402 payments, stablecoin rails, and long-term memory.
+
+---
+
 ## Why this stack exists
 
 AI agents are beginning to call paid APIs, execute x402 micropayments, and operate across multiple sessions autonomously.
@@ -141,6 +149,32 @@ As JPYC expands on Kaia and other rails, Agent Budget Guard provides the account
 
 ---
 
+## What is working now
+
+The following APIs are deployed and accepting requests:
+
+| API | URL | Status |
+|-----|-----|--------|
+| Agent Security Gateway | https://agent-security-gateway.onrender.com | Working prototype |
+| Agent Budget Guard | https://agent-budget-guard.onrender.com | Working prototype |
+| Agent Memory API | https://agent-memory-api-bix5.onrender.com | Working prototype |
+| Agent Evolution Engine | https://agent-evolution-engine.onrender.com | Working prototype |
+
+All four APIs support x402 payment headers, return `next_recommended` in responses, and have Trust Scores of 9/10 (A) as measured by `/api/trust/check`.
+
+---
+
+## Experimental / Planned
+
+| Component | Status | Description |
+|-----------|--------|-------------|
+| Agent Memory Consensus | Experimental | README and OpenAPI contract only. No backend implementation yet. |
+| Agent Abuse Guard | Planned | Not implemented yet. Intended to detect API abuse patterns across agent sessions. |
+| Arc / ERC-8183 integration | Planned | Pre-execution layer before ERC-8183 job funding on Arc testnet. |
+| Kaia payment rail | Planned | JPYC on Kaia compatibility layer. |
+
+---
+
 ## Related repositories
 
 | Repository | Description |
@@ -150,15 +184,17 @@ As JPYC expands on Kaia and other rails, Agent Budget Guard provides the account
 | [agent-memory-api](https://github.com/sasuke15134321/agent-memory-api) | L5 encrypted memory API |
 | [agent-evolution-engine](https://github.com/sasuke15134321/agent-evolution-engine) | L4/L5/L6 orchestrator API |
 | [agent-memory-consensus](https://github.com/sasuke15134321/agent-memory-consensus) | Experimental memory governance API |
+| [ai-agent-payment-safety-stack](https://github.com/sasuke15134321/ai-agent-payment-safety-stack) | This repository — stack overview and documentation |
 
 ---
 
 ## Status
 
-| API | x402 | Trust Score | AEO-ready | Arc compatibility |
-|-----|------|-------------|-----------|-------------------|
-| Agent Security Gateway | ✅ | 9/10 (A) | ✅ | ✅ |
-| Agent Budget Guard | ✅ | 9/10 (A) | ✅ | ✅ |
-| Agent Memory API | ✅ | 9/10 (A) | ✅ | ✅ |
-| Agent Evolution Engine | ✅ | 9/10 (A) | ✅ | ✅ |
-| Agent Memory Consensus | Planned | — | ✅ | ✅ |
+| API | x402 | Trust Score | AEO-ready | Implementation |
+|-----|------|-------------|-----------|----------------|
+| Agent Security Gateway | ✅ | 9/10 (A) | ✅ | Working prototype |
+| Agent Budget Guard | ✅ | 9/10 (A) | ✅ | Working prototype |
+| Agent Memory API | ✅ | 9/10 (A) | ✅ | Working prototype |
+| Agent Evolution Engine | ✅ | 9/10 (A) | ✅ | Working prototype |
+| Agent Memory Consensus | Planned | — | ✅ | Experimental contract (README and OpenAPI only) |
+| Agent Abuse Guard | — | — | — | Planned (not implemented yet) |
