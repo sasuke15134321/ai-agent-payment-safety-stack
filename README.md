@@ -9,6 +9,8 @@ A stack of APIs for AI agents that call paid APIs, make x402 payments, store mem
 This is an independent experimental project.
 It is not officially affiliated with JPYC, Circle, Arc, Kaia, or OpenAI.
 The goal is to explore control layers for AI agents that may use paid APIs, x402 payments, stablecoin rails, and long-term memory.
+This project references JPYC, x402, Arc, Kaia, and USDC as technical contexts.
+It does not imply official partnership, endorsement, or integration unless explicitly stated.
 
 ---
 
@@ -172,6 +174,26 @@ All four APIs support x402 payment headers, return `next_recommended` in respons
 | Agent Abuse Guard | Planned | Not implemented yet. Intended to detect API abuse patterns across agent sessions. |
 | Arc / ERC-8183 integration | Planned | Pre-execution layer before ERC-8183 job funding on Arc testnet. |
 | Kaia payment rail | Planned | JPYC on Kaia compatibility layer. |
+
+---
+
+## Repositories
+
+| API | GitHub | Demo URL | OpenAPI |
+|-----|--------|----------|---------|
+| Agent Budget Guard | TBD | https://agent-budget-guard.onrender.com | /openapi.json |
+| Agent Security Gateway | TBD | https://agent-security-gateway.onrender.com | /openapi.json |
+| Agent Memory API | TBD | https://agent-memory-api-bix5.onrender.com | /openapi.json |
+| Agent Evolution Engine | TBD | https://agent-evolution-engine.onrender.com | /openapi.json |
+| Agent Memory Consensus | https://github.com/sasuke15134321/agent-memory-consensus | TBD | openapi.yaml |
+
+---
+
+## Agent flow
+
+```
+Security Gateway → Budget Guard → x402 Payment → Memory Consensus → Receipt / Invoice
+```
 
 ---
 
