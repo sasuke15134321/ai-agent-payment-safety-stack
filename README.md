@@ -221,5 +221,5 @@ Security Gateway → Budget Guard → x402 Payment → Memory Consensus → Rece
 | Agent Budget Guard | ✅ | 9/10 (A) | ✅ | Working prototype |
 | Agent Memory API | ✅ | 9/10 (A) | ✅ | Working prototype |
 | Agent Evolution Engine | ✅ | 9/10 (A) | ✅ | Working prototype |
-| Agent Memory Consensus | Planned | — | ✅ | Experimental contract (README and OpenAPI only) |
+| Agent Memory Consensus | — | — | ✅ | Experimental contract (README and OpenAPI only) |
 | Agent Abuse Guard | — | — | — | Planned (not implemented yet) |
