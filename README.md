@@ -1,6 +1,27 @@
 # AI Agent Payment Safety Stack
 
-A stack of APIs for AI agents that call paid APIs, make x402 payments, store memory, and create audit-ready logs.
+Not a wallet.
+Not a facilitator.
+Not a payment processor.
+Not a marketplace.
+
+A Japan-built x402-ready safety and audit layer for AI agent payment workflows.
+
+---
+
+AI agents are starting to discover APIs, make payments, and execute workflows.
+
+Payment alone is not enough.
+
+They also need:
+- security checks before calling external APIs
+- budget control before making payments
+- audit-ready records after payments
+- workflow orchestration across all steps
+
+AI Agent Payment Safety Stack provides these layers.
+
+All 4 APIs are indexed in CDP Bazaar as of 2026-05-18.
 
 ---
 
