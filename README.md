@@ -32,6 +32,36 @@ New boundaries need new checks.
 All 4 APIs are indexed in CDP Bazaar.
 Discovery: https://api.cdp.coinbase.com/platform/v2/x402/discovery/merchant?payTo=0x60c402878EfcEcAe5733A88075328Aa2320C39BE
 
+## Use Case: Circle App Kits + Agent Safety Checks
+
+Circle App Kits makes onchain actions easy: bridge, send, swap, balance.
+Agent Safety Checks can be used before these actions to verify intent, amount, recipient, identity, and quota.
+
+Example flow:
+AI agent decides to bridge USDC
+→ dry-run-validate checks amount, chain, recipient, intent, identity, and quota
+→ allow / block / requires_review
+→ app calls kit.bridge()
+
+Example request:
+```json
+POST /api/tool/dry-run-validate
+{
+  "agent_id": "agent_001",
+  "tool_name": "circle.appkit.bridge",
+  "tool_arguments": {
+    "from_chain": "Solana_Devnet",
+    "to_chain": "Arc_Testnet",
+    "amount": "1.00",
+    "asset": "USDC"
+  },
+  "context": "external_transfer"
+}
+```
+
+Note: Agent Safety Checks is not affiliated with Circle.
+This describes a compatible safety-check pattern for onchain SDK actions.
+
 ## Seven Integrity Layers for AI Agents
 
 | Layer | Question | What it controls |
