@@ -38,6 +38,53 @@ status: current
 endpoint: POST /api/evolution/analyze
 price: 0.20 USDC
 
+## Beta Primitives — Agent Insulation Primitives v0.1
+
+name: Tool Call Dry-run Validator
+category: Tool Boundary / Insulation
+purpose: Detect destructive tool calls before execution. Checks tool name and arguments for payment, file deletion, deploy, secret access, memory write, and destructive action patterns.
+when_to_use: Before any tool call that could have irreversible or high-impact effects
+cost_tier: low
+status: beta
+endpoint: POST /api/tool/dry-run-validate
+price: free (beta)
+
+name: Tool Response Sanitizer
+category: Tool Boundary / Insulation
+purpose: Scan tool responses for injected instructions before the agent processes them. Detects prompt injection, system prompt reveal, API key exposure, suspicious URLs, and hidden instructions.
+when_to_use: After receiving a tool response, before the agent acts on the content
+cost_tier: low
+status: beta
+endpoint: POST /api/tool/response-sanitize
+price: free (beta)
+
+name: Schema Drift Checker
+category: Schema Integrity / Insulation
+purpose: Detect unexpected changes in tool schemas before accepting updates. Flags new required fields, dangerous field names, suspicious descriptions, and permission expansions.
+when_to_use: Before accepting an updated tool or MCP schema from an external source
+cost_tier: low
+status: beta
+endpoint: POST /api/schema/drift-check
+price: free (beta)
+
+name: Identity Scope Checker
+category: Identity Integrity / Insulation
+purpose: Verify agent scopes and role before privileged actions. Detects missing scopes, role mismatch, privilege escalation, and excessive scope grants.
+when_to_use: Before any privileged operation such as delete, deploy, admin access, or payment
+cost_tier: low
+status: beta
+endpoint: POST /api/identity/scope-check
+price: free (beta)
+
+name: Quota Limit Checker
+category: Quota Integrity / Insulation
+purpose: Enforce usage limits before the agent calls tools, LLMs, or makes payments. Tracks tool_calls, llm_calls, payment_amount, and subagent_count against configured limits.
+when_to_use: Before each tool call, LLM call, or payment to prevent runaway agent loops
+cost_tier: low
+status: beta
+endpoint: POST /api/quota/check
+price: free (beta)
+
 ## Planned Primitives — Agent Core Integrity Pack
 
 name: Timestamp Integrity Checker
