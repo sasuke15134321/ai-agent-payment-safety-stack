@@ -144,9 +144,12 @@ Each current primitive includes:
 
 See primitives_catalog.md for the full list of current and planned primitives.
 
-## Disclaimer
+## What We Are Not
 
-Not a wallet. Not a payment processor. Not a marketplace.
-Small control APIs for AI agent boundaries.
-Not officially affiliated with Anthropic, Coinbase, Circle, CDP, Arc, JPYC, or any related foundation.
-References to Claude Managed Agents and CDP Bazaar are for context only.
+Agent Control Primitives is not a payment rail, wallet, custodian, or x402 facilitator.
+
+We provide lightweight safety, budget, approval, context, and audit primitives that AI agents can use before and after tool calls, API usage, and stablecoin payments.
+
+日本語：
+Agent Control Primitives は、決済レール・ウォレット・カストディアン・x402ファシリテーターではありません。
+AIエージェントがツール実行・API利用・ステーブルコイン決済を行う前後に使う、軽量な安全確認・予算管理・承認・記録の部品を提供します。
