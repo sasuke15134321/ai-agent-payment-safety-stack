@@ -20,16 +20,38 @@ Anthropic announced Claude Managed Agents with self-hosted sandboxes and MCP tun
 This separates agent reasoning from tool execution.
 New boundaries need new checks.
 
-## Current Primitives
+## Agent Pay / Safety Shelf ✅ Quality verified (2026-05-21)
 
-| Primitive | Purpose | Endpoint | Price |
+Lightweight safety checks before and after AI agents call external tools, APIs, and payments.
+
+| Primitive | When to use | Endpoint | Price |
 |---|---|---|---|
-| agent-security-gateway | Scan prompts before an AI agent calls tools, stores memory, or makes paid API requests. | POST /api/security/scan | 0.01 USDC |
-| agent-budget-guard | Check budget limits before an AI agent pays for APIs or executes x402 requests. | POST /api/budget/check | 0.03 USDC |
-| agent-memory-api | Store audit-ready memory after an AI agent makes a decision or completes a workflow step. | POST /api/memory/store | 0.05 USDC |
-| agent-evolution-engine | Analyze Security, Budget, Payment, Memory workflow traces and recommend improvements. | POST /api/evolution/analyze | 0.20 USDC |
+| Security Scan | General scan before API calls or payments | POST /api/security/scan | 0.05 USDC |
+| Tool Call Dry-run Validator | Before executing any external tool | POST /api/tool/dry-run-validate | 0.01 USDC |
+| Tool Response Sanitizer | After receiving external tool output | POST /api/tool/response-sanitize | 0.01 USDC |
+| Schema Drift Checker | When tool schema may have changed | POST /api/schema/drift-check | 0.01 USDC |
+| Identity Scope Checker | Before privileged actions | POST /api/identity/scope-check | 0.01 USDC |
+| Quota Limit Checker | Before paid or resource-intensive actions | POST /api/quota/check | 0.01 USDC |
+| Budget Guard | Before x402 / USDC / JPYC payments | POST /api/budget/check | 0.03 USDC |
+| Memory Store | After decisions or workflow steps | POST /api/memory/store | 0.05 USDC |
+| Workflow Analyzer | Analyze Security→Budget→Payment→Memory traces | POST /api/evolution/analyze | 0.20 USDC |
 
-All 4 APIs are indexed in CDP Bazaar.
+Use one check, or combine as a safety chain.
+
+## Agent Memory / Context Shelf (Planned)
+
+Coming next: primitives for deciding what context, past logs, and source-of-truth to check before acting.
+
+Planned components:
+- Context Recall Trigger — decide if past logs or memory need checking
+- Memory Depth Router — how deep to search past context
+- Source-of-Truth Selector — which registry or official file to verify
+- Cross-Agent Claim Checker — verify claims from other agents
+- Memory Provenance Record — record what was used as the basis for a decision
+
+---
+
+**All public APIs indexed in CDP Bazaar:**
 Discovery: https://api.cdp.coinbase.com/platform/v2/x402/discovery/merchant?payTo=0x60c402878EfcEcAe5733A88075328Aa2320C39BE
 
 ## Use Case: Circle App Kits + Agent Safety Checks
