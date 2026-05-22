@@ -147,6 +147,35 @@ Each current primitive includes:
 
 See primitives_catalog.md for the full list of current and planned primitives.
 
+## Payment Safety Stack
+
+```
+Prompt / Request
+→ Security Check (agent-security-gateway)
+→ Budget Check (agent-budget-guard)
+→ Payment Approval
+→ Execution
+→ Audit Log (agent-memory-api)
+→ Memory / Decision Record (agent-evolution-engine)
+```
+
+## Use Cases
+
+- AI agents paying APIs via x402
+- Logistics agents receiving USDC per execution
+- Machine wallets buying electricity or compute with nanopayments
+
+日本語：
+- x402経由でAPIに支払うAIエージェント
+- 実行ごとにUSDC報酬を受け取る物流エージェント
+- 電力や計算資源を少額決済で購入する機械ウォレット
+
+## Related Control Problem
+
+The same control problem appears in AI security agents:
+finding, triaging, patching, and auditing actions at scale.
+Budget limits, approval flows, and audit logs apply there too.
+
 ## JPYC / Domestic Stablecoin Ready
 
 For AI agents using JPYC, x402, or domestic stablecoins,
