@@ -147,6 +147,23 @@ Each current primitive includes:
 
 See primitives_catalog.md for the full list of current and planned primitives.
 
+## JPYC / Domestic Stablecoin Ready
+
+For AI agents using JPYC, x402, or domestic stablecoins,
+Agent Pay / Safety Shelf primitives can be used before payment,
+after payment, and for audit records.
+
+| Primitive | Role in JPYC / Stablecoin flow |
+|---|---|
+| Budget Guard | Check spending limits before JPYC payment |
+| Identity Scope Checker | Verify agent has permission to make payment |
+| Tool Call Dry-run Validator | Validate payment action before execution |
+| Memory Store | Record payment decision for audit |
+| Workflow Analyzer | Analyze Security→Budget→Payment→Audit trace |
+
+Not affiliated with JPYC Inc., LINE, or Unifi.
+These primitives are designed to work with any x402 or stablecoin payment flow.
+
 ## What We Are Not
 
 Agent Control Primitives is not a payment rail, wallet, custodian, or x402 facilitator.
