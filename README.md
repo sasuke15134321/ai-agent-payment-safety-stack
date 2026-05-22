@@ -40,14 +40,17 @@ Use one check, or combine as a safety chain.
 
 ## Agent Memory / Context Shelf (Planned)
 
-Coming next: primitives for deciding what context, past logs, and source-of-truth to check before acting.
+Primitives for deciding what context, past logs, and source-of-truth to check before acting.
 
-Planned components:
-- Context Recall Trigger — decide if past logs or memory need checking
-- Memory Depth Router — how deep to search past context
-- Source-of-Truth Selector — which registry or official file to verify
-- Cross-Agent Claim Checker — verify claims from other agents
-- Memory Provenance Record — record what was used as the basis for a decision
+| Primitive | Purpose | When to use | Endpoint (planned) | Version |
+|---|---|---|---|---|
+| Context Recall Trigger | Decide if past logs or memory need checking | Before making decisions that depend on past context | POST /v1/context/intercept | v0.1 |
+| Memory Depth Router | Determine how deep to search past context | For multi-step workflows with dependencies | POST /v1/context/intercept | v0.1 |
+| Source-of-Truth Selector | Select which registry or official file to verify | When multiple data sources exist | POST /v1/context/intercept | v0.1 |
+| Cross-Agent Claim Checker | Verify claims and reports from other agents | In multi-agent environments | POST /v1/context/intercept | v0.2 |
+| Memory Provenance Record | Record what was used as basis for decision | For audit, compliance, and decision tracing | POST /v1/context/intercept | v0.2 |
+
+See `memory_context_shelf_spec.md` for detailed specifications.
 
 ---
 
