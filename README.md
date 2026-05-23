@@ -52,6 +52,20 @@ Primitives for deciding what context, past logs, and source-of-truth to check be
 
 See `memory_context_shelf_spec.md` for detailed specifications.
 
+## Planned Design Specs
+
+- Agent Budget Guard Interceptor
+  Pre-execution / pre-payment control layer for x402, MCP, LLM inference, and tool calls.
+  Spec: agent_budget_guard_interceptor_spec.md
+
+- Budget Guard Manifest
+  Machine-readable metadata for pricing, side effects, safety profile, and budget_guard_hints.
+  Spec: budget_guard_manifest_spec.md
+
+- Source Lineage Tracker
+  Tracks primary source lineage for claims to reduce multi-agent error reinforcement.
+  Spec: source_lineage_tracker_spec.md
+
 ---
 
 **All public APIs indexed in CDP Bazaar:**
