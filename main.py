@@ -14,16 +14,21 @@ No approval execution, blockchain transactions, x402/JPYC payments,
 deploys, memory writes, or tool calls.
 """
 
+import base64
 import hashlib
 import json
+import os
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
+WALLET_ADDRESS = os.getenv("WALLET_ADDRESS", "0x60c402878EfcEcAe5733A88075328Aa2320C39BE")
+TEST_MODE = os.getenv("TEST_MODE", "false").lower() == "true"
 
 app = FastAPI(
     title="Agent Approval Unit Builder",
@@ -44,6 +49,105 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# x402 paid endpoint config
+_PAID_ENDPOINTS = {
+    ("POST", "/api/approval-unit/build"): "0.05",
+}
+
+_ENDPOINT_DESCRIPTIONS = {
+    "/api/approval-unit/build": (
+        "Build a minimal human decision contract from AI-generated findings, patches, "
+        "payment requests, or decision-support outputs."
+    ),
+}
+
+# CDP Bazaar indexing extension
+_BAZAAR_EXTENSIONS = {
+    "bazaar": {
+        "info": {
+            "input": {
+                "type": "http",
+                "method": "POST",
+                "bodyType": "json",
+                "body": {
+                    "source_type": "security_patch",
+                    "approval_unit_type": "security_patch_approval",
+                    "title": "Approve patch for SQL injection",
+                    "summary": "Replace raw SQL with parameterized query.",
+                    "risk_level": "high",
+                },
+            },
+            "output": {
+                "type": "json",
+                "example": {
+                    "approval_question": "Approve this security patch for staging merge?",
+                    "recommended_human_action": "approve_staging_only",
+                    "chain_anchor_status": "not_anchored",
+                    "approval_unit_hash": "sha256:...",
+                },
+            },
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "approval_question": {"type": "string"},
+                    "recommended_human_action": {"type": "string"},
+                    "chain_anchor_status": {"type": "string"},
+                    "approval_unit_hash": {"type": "string"},
+                },
+            },
+        }
+    }
+}
+
+
+@app.middleware("http")
+async def x402_payment_middleware(request: Request, call_next):
+    method = request.method
+    path = request.url.path
+    price = _PAID_ENDPOINTS.get((method, path))
+
+    if not TEST_MODE and price is not None:
+        payment_header = (
+            request.headers.get("PAYMENT-SIGNATURE") or request.headers.get("X-PAYMENT")
+        )
+        if not payment_header:
+            amount = str(round(float(price) * 1_000_000))
+            _accept = {
+                "scheme": "exact",
+                "network": "eip155:8453",
+                "amount": amount,
+                "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                "payTo": WALLET_ADDRESS,
+                "maxTimeoutSeconds": 300,
+                "extra": {"name": "USD Coin", "version": "2"},
+                "resource": {"method": method, "mimeType": "application/json"},
+            }
+            _pc = {
+                "x402Version": 2,
+                "error": "Payment required",
+                "resource": {
+                    "url": str(request.url),
+                    "method": method,
+                    "description": _ENDPOINT_DESCRIPTIONS.get(path, "Paid API endpoint"),
+                    "mimeType": "application/json",
+                },
+                "accepts": [_accept],
+            }
+            if path == "/api/approval-unit/build":
+                _pc["extensions"] = _BAZAAR_EXTENSIONS
+                _pc["approval_unit_id"] = None
+                _pc["approval_unit_hash"] = None
+                _pc["next_recommended"] = "complete_x402_payment"
+            return JSONResponse(
+                status_code=402,
+                content=_pc,
+                headers={
+                    "Payment-Required": base64.b64encode(json.dumps(_pc).encode()).decode()
+                },
+            )
+
+    return await call_next(request)
 
 
 # ─────────────────────────────────────────────
@@ -519,3 +623,26 @@ async def root():
 @app.get("/health")
 async def health():
     return {"status": "ok", "version": "0.1.0"}
+
+
+@app.get("/.well-known/x402", include_in_schema=False)
+async def x402_discovery_manifest():
+    return {
+        "version": 1,
+        "name": "Agent Approval Unit Builder",
+        "title": "Agent Approval Unit Builder",
+        "description": (
+            "Build minimal human decision contracts from AI-generated findings, patches, "
+            "payment requests, deployment proposals, memory writes, tool execution requests, "
+            "or decision-support outputs. Approval Unit = Human Decision Contract."
+        ),
+        "tags": ["AI", "Approval", "Governance"],
+        "resources": [
+            "https://ai-agent-payment-safety-stack.onrender.com/api/approval-unit/build",
+        ],
+        "ownershipProofs": [WALLET_ADDRESS],
+        "instructions": (
+            "Call POST /api/approval-unit/build with x402 payment (0.05 USDC) "
+            "to build an Approval Unit."
+        ),
+    }
