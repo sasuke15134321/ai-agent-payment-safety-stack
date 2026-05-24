@@ -87,16 +87,16 @@ _BAZAAR_EXTENSIONS = {
                     "approval_unit_hash": "sha256:...",
                 },
             },
-            "schema": {
-                "type": "object",
-                "properties": {
-                    "approval_question": {"type": "string"},
-                    "recommended_human_action": {"type": "string"},
-                    "chain_anchor_status": {"type": "string"},
-                    "approval_unit_hash": {"type": "string"},
-                },
+        },
+        "schema": {
+            "type": "object",
+            "properties": {
+                "approval_question": {"type": "string"},
+                "recommended_human_action": {"type": "string"},
+                "chain_anchor_status": {"type": "string"},
+                "approval_unit_hash": {"type": "string"},
             },
-        }
+        },
     }
 }
 
