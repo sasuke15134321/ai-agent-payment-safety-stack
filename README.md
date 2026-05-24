@@ -209,6 +209,32 @@ Use this stack when an AI agent needs to:
 
 ---
 
+## Deployment
+
+This FastAPI app can be deployed on Render or similar platforms.
+
+Start command:
+
+```
+uvicorn main:app --host 0.0.0.0 --port $PORT
+```
+
+After deployment, check:
+
+- GET /docs
+- POST /api/approval-unit/build
+- GET /openapi.json
+
+v0.1 constraints remain the same:
+- no approval execution
+- no payment execution
+- no deployment execution
+- no memory write execution
+- no tool execution
+- no blockchain transaction
+
+---
+
 **All public APIs indexed in CDP Bazaar:**
 Discovery: https://api.cdp.coinbase.com/platform/v2/x402/discovery/merchant?payTo=0x60c402878EfcEcAe5733A88075328Aa2320C39BE
 
