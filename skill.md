@@ -33,11 +33,19 @@ Do not use this skill to:
 - validate evidence directly (use Evidence Coverage Gate instead)
 - check budgets (use Agent Budget Guard Interceptor instead)
 
-## Main endpoint
+## Live endpoint
 
-```
 POST https://ai-agent-payment-safety-stack.onrender.com/api/approval-unit/build
-```
+
+## Pricing
+
+0.05 USDC / call
+
+## x402 status
+
+- Seller Tools: Implementation Looks Correct ✅
+- verify + settle confirmed ✅
+- CDP Bazaar automatic indexing in progress
 
 ## Minimum required inputs
 
@@ -98,6 +106,11 @@ The API returns an Approval Unit containing:
 - No x402 / JPYC payment is sent.
 - No memory write is performed.
 - No tool execution is performed.
+
+## Important
+
+This skill creates an Approval Unit only.
+It does not execute approval, payment, deployment, memory write, tool execution, or blockchain anchoring.
 
 ## Safety chain position
 

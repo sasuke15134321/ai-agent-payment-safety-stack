@@ -71,6 +71,34 @@ v0.1 is build-only:
 - `approval_unit_hash` is derived from canonical fields for audit stability.
 - Blockchain readiness fields: `chain_anchor_status = not_anchored`.
 
+### Live API status
+
+Approval Unit Builder v0.1 is a live, externally accessible API for converting AI-generated candidates into minimal human decision contracts.
+
+It is intended for:
+
+- AI-generated security findings
+- patch candidates
+- remediation plans
+- x402 / JPYC / USDC payment requests
+- deployment proposals
+- memory write requests
+- high-risk tool execution requests
+- decision-support outputs
+
+**Public endpoint:** https://ai-agent-payment-safety-stack.onrender.com/api/approval-unit/build
+
+**Docs:** https://ai-agent-payment-safety-stack.onrender.com/docs
+
+**Pricing:** 0.05 USDC / call
+
+**x402 status:**
+- Seller Tools: Implementation Looks Correct ✅
+- Payment verification: x402 verify + settle confirmed ✅
+- CDP Bazaar: automatic indexing in progress
+
+v0.1 remains build-only. It does not approve, pay, deploy, write memory, execute tools, or send blockchain transactions.
+
 ### Example request
 
 ```bash

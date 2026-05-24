@@ -60,6 +60,25 @@ approval-unit-builder, human-decision-contract, human-approval, decision-theory,
 x402-approval, jpyc-approval, remediation-approval, deployment-approval,
 audit-workflow, blockchain-anchor-ready, agent-control-primitives
 
+## Live paid API
+
+Endpoint:
+https://ai-agent-payment-safety-stack.onrender.com/api/approval-unit/build
+
+Price:
+0.05 USDC / call
+
+Payment:
+x402 verify + settle confirmed.
+
+CDP Bazaar:
+Seller Tools Implementation Looks Correct.
+Automatic indexing is in progress.
+
+Use this API when an AI agent needs to create a minimal human decision contract before approval, payment, deployment, memory write, tool execution, or decision use.
+
+Do not assume this API performs approval or execution. It only builds the Approval Unit.
+
 ## Related primitives (planned)
 
 - Human Review Bridge: converts Gate Result Router outputs into review tasks
