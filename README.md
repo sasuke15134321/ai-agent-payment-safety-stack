@@ -52,6 +52,69 @@ Primitives for deciding what context, past logs, and source-of-truth to check be
 
 See `memory_context_shelf_spec.md` for detailed specifications.
 
+## Agent Control Primitives Flow
+
+This repository defines planned control primitives for AI agent workflows.
+
+The goal is not only to detect problems.
+The goal is to reduce post-gate operational workload by connecting detection, routing, human review, and audit-ready records.
+
+### Flow
+
+```
+Agent / Tool Call / Paid API Call
+  ↓
+Agent Budget Guard Interceptor
+  ↓
+Budget Guard Manifest
+  ↓
+Source Lineage Tracker
+  ↓
+Evidence Coverage Gate
+  ↓
+Gate Result Router
+  ↓
+Human Review Bridge
+  ↓
+Human Review / Approval / Rework / Research
+  ↓
+Audit Log / Agent Memory
+```
+
+### Component roles
+
+- **Agent Budget Guard Interceptor**: Checks budget, payment, frequency, and spending policy before paid or side-effecting actions.
+
+- **Budget Guard Manifest**: Provides machine-readable metadata for pricing, side effects, safety profile, and budget guard hints.
+
+- **Source Lineage Tracker**: Tracks whether claims are supported by primary sources or only by agent-generated outputs.
+
+- **Evidence Coverage Gate**: Checks whether AI-generated reports, memos, recommendations, and decision cards have sufficient source coverage.
+
+- **Gate Result Router**: Converts gate results into workflow routes such as research, rework, human review, approval escalation, execution block, decision-use block, or log-only audit.
+
+- **Human Review Bridge**: Converts routed gate results into human-readable review tasks for analysts, approvers, developers, auditors, or operators.
+
+### Summary
+
+Gates detect issues.
+The router decides the next workflow path.
+The bridge turns that path into a human-reviewable task.
+The stack is designed to reduce manual review load after AI agent actions, paid API calls, or decision-support outputs.
+
+### For AI agents
+
+Use this stack when an AI agent needs to:
+- call paid APIs
+- control x402 or other agent payments
+- verify evidence behind generated reports
+- track source lineage
+- route gate failures
+- reduce human review workload
+- preserve audit-ready workflow records
+
+---
+
 ## Planned Design Specs
 
 - Agent Budget Guard Interceptor
