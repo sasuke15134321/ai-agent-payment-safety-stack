@@ -242,18 +242,19 @@ def _generate_recommended_action(
     if not req.test_results and req.approval_unit_type == "security_patch_approval":
         return "request_security_retest", "Security patch approval requires test results."
 
-    # High/critical risk + production deploy
-    if risk in ("high", "critical") and "production" in blocked_str:
-        return (
-            "escalate_to_security_lead",
-            "High-risk production action requires escalation.",
-        )
-
     # Tests present + rollback available + staging in blocked actions
+    # (takes priority over escalation when staging can be safely approved)
     if req.test_results and req.rollback_available is True and "staging" in blocked_str:
         return (
             "approve_staging_only",
             "Tests passed and rollback is available, but production should remain blocked.",
+        )
+
+    # High/critical risk + production deploy (no safe staging path available)
+    if risk in ("high", "critical") and "production" in blocked_str:
+        return (
+            "escalate_to_security_lead",
+            "High-risk production action requires escalation.",
         )
 
     # Default

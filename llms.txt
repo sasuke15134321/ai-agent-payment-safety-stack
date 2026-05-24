@@ -1,0 +1,65 @@
+# AI Agent Payment Safety Stack
+
+This project provides AI agent control primitives for paid API calls, budget checks,
+evidence review, gate routing, human review, and approval unit generation.
+
+## Available API
+
+### POST /api/approval-unit/build
+
+Builds a minimal human decision contract from an AI-generated candidate.
+
+**Core concept: Approval Unit = Human Decision Contract**
+
+Use this endpoint when an AI agent needs to convert:
+- security findings
+- patch candidates
+- remediation plans
+- x402 / JPYC / USDC payment requests
+- deployment proposals
+- memory write requests
+- high-risk tool execution requests
+- decision-support outputs
+
+into a human-approvable Approval Unit.
+
+The Approval Unit defines:
+- what the human is being asked to approve
+- what actions become allowed if approved
+- what remains blocked
+- what happens if rejected, reworked, or escalated
+- what human-side action is suggested next
+- an approval_unit_hash for audit or future blockchain anchoring
+
+Do not use this endpoint to:
+- approve automatically
+- execute payments
+- deploy code
+- write memory
+- execute tools
+- send blockchain transactions
+
+v0.1 behavior:
+- build only
+- rule-based approval_question generation (not LLM-generated)
+- stable approval_unit_hash from canonical fields (SHA-256)
+- blockchain fields are readiness only
+- chain_anchor_status is always not_anchored in v0.1
+
+Recommended next step:
+Use this API after Human Review Bridge or Gate Result Router when a human approver
+needs a minimal decision unit. The output approval_unit_id and approval_unit_hash
+can be stored in Agent Memory API for audit records.
+
+Agent tags:
+approval-unit-builder, human-decision-contract, human-approval, decision-theory,
+x402-approval, jpyc-approval, remediation-approval, deployment-approval,
+audit-workflow, blockchain-anchor-ready, agent-control-primitives
+
+## Related primitives (planned)
+
+- Human Review Bridge: converts Gate Result Router outputs into review tasks
+- Gate Result Router: routes gate results into workflow paths
+- Evidence Coverage Gate: checks source coverage for AI-generated reports
+- Source Lineage Tracker: tracks primary source lineage for claims
+- Agent Budget Guard Interceptor: checks spending before payments
