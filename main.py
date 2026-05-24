@@ -1,0 +1,520 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Agent Approval Unit Builder API v0.1
+
+Converts AI-generated findings, patches, payment requests, deployment proposals,
+memory writes, tool execution requests, or decision-support outputs
+into minimal human decision contracts (Approval Units).
+
+Core concept: Approval Unit = Human Decision Contract
+
+v0.1: build-only.
+No approval execution, blockchain transactions, x402/JPYC payments,
+deploys, memory writes, or tool calls.
+"""
+
+import hashlib
+import json
+import uuid
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+
+
+app = FastAPI(
+    title="Agent Approval Unit Builder",
+    version="0.1.0",
+    description=(
+        "Converts AI-generated findings, patches, payment requests, deployment proposals, "
+        "memory writes, tool execution requests, or decision-support outputs into minimal "
+        "human decision contracts (Approval Units). "
+        "Approval Unit = Human Decision Contract. "
+        "v0.1 is build-only: no approval execution, blockchain transactions, or payments."
+    ),
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+# ─────────────────────────────────────────────
+# Pydantic models
+# ─────────────────────────────────────────────
+
+class ApprovalUnitBuildRequest(BaseModel):
+    source_type: str
+    source_id: Optional[str] = None
+    approval_unit_type: str
+    finding_id: Optional[str] = None
+    claim_id: Optional[str] = None
+    patch_id: Optional[str] = None
+    payment_request_id: Optional[str] = None
+    deployment_request_id: Optional[str] = None
+    memory_write_id: Optional[str] = None
+    tool_call_id: Optional[str] = None
+    review_task_id: Optional[str] = None
+    title: str
+    summary: str
+    risk_level: str
+    severity: Optional[str] = None
+    evidence_ids: List[str] = []
+    source_ids: List[str] = []
+    test_results: List[str] = []
+    regression_risk: Optional[str] = None
+    rollback_available: Optional[bool] = None
+    cost_impact: Optional[Dict[str, Any]] = None
+    blocked_actions_until_approval: List[str] = []
+    allowed_human_actions: List[str] = [
+        "approve", "reject", "request_rework", "request_more_evidence", "escalate"
+    ]
+    suggested_human_actions: List[str] = []
+    recommended_decision: Optional[str] = None
+    reviewer_role: Optional[str] = None
+    approver_role: str = "human_approver"
+    request_id: Optional[str] = None
+    task_id: Optional[str] = None
+    agent_id: Optional[str] = None
+
+
+class ApprovalUnitBuildResponse(BaseModel):
+    approval_unit_id: str
+    approval_unit_hash: str
+    approval_unit_type: str
+    title: str
+    approval_question: str
+    decision_required: str
+    decision_options: List[str]
+    approver_role: str
+    priority: str
+    risk_level: str
+    summary: str
+    evidence_summary: str
+    required_evidence: List[str]
+    required_checks_before_approval: List[str]
+    test_summary: str
+    regression_risk: Optional[str]
+    rollback_available: Optional[bool]
+    suggested_human_actions: List[str]
+    recommended_human_action: str
+    human_action_reason: str
+    allowed_human_actions: List[str]
+    blocked_actions_until_approval: List[str]
+    if_approved: Dict[str, Any]
+    if_rejected: Dict[str, Any]
+    if_request_rework: Dict[str, Any]
+    if_request_more_evidence: Dict[str, Any]
+    if_escalated: Dict[str, Any]
+    post_decision_route: str
+    decision_effect_summary: str
+    audit_required: bool
+    blockchain_anchor_ready: bool
+    chain_anchor_status: str
+    chain_tx_hash: Optional[str]
+    request_id: Optional[str]
+    task_id: Optional[str]
+    created_at: str
+
+
+# ─────────────────────────────────────────────
+# Rule-based generators
+# ─────────────────────────────────────────────
+
+def _infer_scope(blocked_actions: List[str]) -> str:
+    """Infer scope from blocked_actions for template generation."""
+    joined = " ".join(blocked_actions).lower()
+    if "merge_to_staging" in joined or ("merge" in joined and "staging" in joined):
+        return "staging merge"
+    if "deploy_to_production" in joined or ("deploy" in joined and "production" in joined):
+        return "production deployment"
+    if "send_x402_payment" in joined or "x402_payment" in joined:
+        return "x402 payment execution"
+    if "memory_write" in joined or "write_to_memory" in joined:
+        return "long-term memory"
+    if "tool_call" in joined or "tool_execution" in joined:
+        return "tool execution"
+    if "use_in_decision_card" in joined or "decision_card" in joined:
+        return "decision card use"
+    return "the requested action"
+
+
+_APPROVAL_QUESTION_TEMPLATES: Dict[str, str] = {
+    "security_patch_approval":     "Approve this security patch for {scope}?",
+    "remediation_plan_approval":   "Approve this remediation plan for {scope}?",
+    "payment_approval":            "Approve this payment request for {scope}?",
+    "deployment_approval":         "Approve this deployment action for {scope}?",
+    "decision_card_approval":      "Approve this decision card for {scope}?",
+    "legal_review_approval":       "Approve this legal or compliance-sensitive output for review use?",
+    "financial_review_approval":   "Approve this financial decision-support output for review use?",
+    "evidence_exception_approval": "Approve this evidence exception for limited decision use?",
+    "memory_write_approval":       "Approve this content to be written to agent memory?",
+    "tool_execution_approval":     "Approve this high-risk tool execution?",
+}
+
+
+def _generate_approval_question(req: ApprovalUnitBuildRequest) -> str:
+    """Rule-based template generation. v0.1: no LLM generation."""
+    template = _APPROVAL_QUESTION_TEMPLATES.get(
+        req.approval_unit_type, "Approve this action for {scope}?"
+    )
+    scope = _infer_scope(req.blocked_actions_until_approval)
+    return template.format(scope=scope)
+
+
+_SUGGESTED_ACTIONS_BY_TYPE: Dict[str, List[str]] = {
+    "security_patch_approval": [
+        "review_patch_diff", "check_test_results", "verify_source_lineage",
+        "request_security_retest", "approve_staging_only",
+    ],
+    "remediation_plan_approval": [
+        "review_remediation_plan", "check_regression_risk", "verify_rollback_plan",
+        "approve_limited_execution", "request_more_evidence",
+    ],
+    "payment_approval": [
+        "check_budget_limit", "verify_payment_purpose", "reduce_payment_scope",
+        "approve_payment_only", "deny_payment",
+    ],
+    "deployment_approval": [
+        "check_deployment_scope", "verify_rollback_plan", "approve_staging_only",
+        "block_production_deploy", "escalate_to_engineering_lead",
+    ],
+    "decision_card_approval": [
+        "verify_evidence_coverage", "check_source_lineage", "request_more_evidence",
+        "approve_decision_use_only", "mark_claim_as_assumption",
+    ],
+    "legal_review_approval": [
+        "review_legal_output", "verify_compliance_scope", "escalate_to_legal_team",
+        "approve_limited_use", "request_more_evidence",
+    ],
+    "financial_review_approval": [
+        "review_financial_output", "verify_source_lineage", "escalate_to_financial_reviewer",
+        "approve_decision_use_only", "request_more_evidence",
+    ],
+    "evidence_exception_approval": [
+        "review_exception_scope", "verify_known_risks", "approve_with_exception_record",
+        "reject_exception", "request_more_evidence",
+    ],
+    "memory_write_approval": [
+        "verify_source_lineage", "check_memory_scope", "approve_memory_write",
+        "reject_memory_write", "request_more_evidence",
+    ],
+    "tool_execution_approval": [
+        "inspect_tool_call", "verify_risk_level", "approve_limited_execution",
+        "reject_tool_execution", "escalate_to_operator",
+    ],
+}
+
+_DEFAULT_SUGGESTED_ACTIONS = ["review_summary", "check_evidence", "approve", "reject", "request_rework"]
+
+
+def _generate_suggested_actions(req: ApprovalUnitBuildRequest) -> List[str]:
+    if req.suggested_human_actions:
+        return req.suggested_human_actions
+    return _SUGGESTED_ACTIONS_BY_TYPE.get(req.approval_unit_type, _DEFAULT_SUGGESTED_ACTIONS)
+
+
+def _generate_recommended_action(
+    req: ApprovalUnitBuildRequest, suggested: List[str]
+) -> tuple:
+    """Rule-based recommended_human_action. v0.1: deterministic rules only."""
+    blocked_str = " ".join(req.blocked_actions_until_approval).lower()
+    risk = req.risk_level.lower()
+
+    # Rollback missing + deployment type
+    if req.rollback_available is False and (
+        "deploy" in blocked_str or "deployment" in req.approval_unit_type
+    ):
+        return "request_rollback_plan", "Rollback plan is missing."
+
+    # No evidence and no sources
+    if not req.evidence_ids and not req.source_ids:
+        return "request_more_evidence", "No evidence or source IDs are attached."
+
+    # Security patch without test results
+    if not req.test_results and req.approval_unit_type == "security_patch_approval":
+        return "request_security_retest", "Security patch approval requires test results."
+
+    # High/critical risk + production deploy
+    if risk in ("high", "critical") and "production" in blocked_str:
+        return (
+            "escalate_to_security_lead",
+            "High-risk production action requires escalation.",
+        )
+
+    # Tests present + rollback available + staging in blocked actions
+    if req.test_results and req.rollback_available is True and "staging" in blocked_str:
+        return (
+            "approve_staging_only",
+            "Tests passed and rollback is available, but production should remain blocked.",
+        )
+
+    # Default
+    default = req.recommended_decision or (suggested[0] if suggested else "approve")
+    return default, "Default recommended action based on approval unit type."
+
+
+def _generate_required_evidence(req: ApprovalUnitBuildRequest) -> List[str]:
+    base: Dict[str, List[str]] = {
+        "security_patch_approval":     ["finding", "patch_diff", "test_results", "rollback_plan"],
+        "remediation_plan_approval":   ["remediation_plan", "risk_assessment", "rollback_plan"],
+        "payment_approval":            ["payment_purpose", "budget_limit", "approval_scope"],
+        "deployment_approval":         ["deployment_plan", "rollback_plan", "test_results"],
+        "decision_card_approval":      ["primary_source_ids", "evidence_coverage", "claim_list"],
+        "legal_review_approval":       ["legal_summary", "compliance_scope", "risk_notes"],
+        "financial_review_approval":   ["financial_summary", "source_lineage", "decision_scope"],
+        "evidence_exception_approval": ["exception_reason", "known_risks", "limited_scope"],
+        "memory_write_approval":       ["source_lineage", "memory_scope", "content_summary"],
+        "tool_execution_approval":     ["tool_definition", "risk_assessment", "execution_scope"],
+    }
+    required = list(base.get(req.approval_unit_type, ["summary", "evidence_ids", "source_ids"]))
+    if not req.evidence_ids:
+        required.append("evidence_ids_required")
+    if not req.test_results and req.approval_unit_type in (
+        "security_patch_approval", "deployment_approval"
+    ):
+        required.append("test_results_required")
+    return required
+
+
+def _generate_required_checks(req: ApprovalUnitBuildRequest) -> List[str]:
+    checks: Dict[str, List[str]] = {
+        "security_patch_approval":     ["patch_diff_reviewed", "test_results_confirmed", "source_lineage_verified"],
+        "remediation_plan_approval":   ["plan_reviewed", "regression_risk_assessed", "rollback_confirmed"],
+        "payment_approval":            ["budget_limit_confirmed", "payment_purpose_verified", "approver_authorization_confirmed"],
+        "deployment_approval":         ["deployment_scope_reviewed", "rollback_plan_confirmed", "test_results_confirmed"],
+        "decision_card_approval":      ["evidence_coverage_verified", "primary_sources_confirmed", "claim_list_reviewed"],
+        "legal_review_approval":       ["legal_output_reviewed", "compliance_scope_confirmed"],
+        "financial_review_approval":   ["financial_output_reviewed", "source_lineage_confirmed"],
+        "evidence_exception_approval": ["exception_scope_reviewed", "known_risks_acknowledged"],
+        "memory_write_approval":       ["source_lineage_verified", "memory_scope_confirmed"],
+        "tool_execution_approval":     ["tool_call_inspected", "risk_level_verified"],
+    }
+    base = list(checks.get(req.approval_unit_type, ["summary_reviewed", "evidence_confirmed"]))
+    if req.rollback_available is True and "rollback_plan_confirmed" not in base:
+        base.append("rollback_plan_confirmed")
+    return base
+
+
+def _generate_decision_effects(req: ApprovalUnitBuildRequest):
+    blocked = req.blocked_actions_until_approval
+
+    # Classify staging-level vs production-level blocked actions
+    staging_allowed = [
+        a for a in blocked
+        if any(k in a.lower() for k in ("staging", "payment_only", "memory_write", "limited", "decision_use"))
+    ]
+    still_blocked = [
+        a for a in blocked
+        if any(k in a.lower() for k in ("production", "deploy_to_prod"))
+    ]
+
+    # Fallback: if no clear split, allow first blocked action only
+    if not staging_allowed and blocked:
+        staging_allowed = [blocked[0]]
+        still_blocked = [a for a in blocked if a not in staging_allowed]
+
+    if_approved = {
+        "allowed_actions": staging_allowed,
+        "still_blocked_actions": still_blocked,
+        "post_decision_route": "proceed_with_approved_scope",
+    }
+    if_rejected = {
+        "blocked_actions": blocked,
+        "post_decision_route": "stop_or_reassess",
+    }
+    if_request_rework = {
+        "post_decision_route": "route_to_rework",
+        "required_changes": ["address_reviewer_feedback", "resubmit_for_approval"],
+    }
+    if_request_more_evidence = {
+        "post_decision_route": "route_to_research",
+        "required_evidence": _generate_required_evidence(req),
+    }
+    if_escalated = {
+        "post_decision_route": "escalate_to_approver",
+        "required_context": ["approval_unit", "risk_summary", "blocked_actions"],
+    }
+    return if_approved, if_rejected, if_request_rework, if_request_more_evidence, if_escalated
+
+
+def _generate_priority(risk_level: str) -> str:
+    return {"critical": "critical", "high": "high", "medium": "medium", "low": "low"}.get(
+        risk_level.lower(), "medium"
+    )
+
+
+def _generate_evidence_summary(req: ApprovalUnitBuildRequest) -> str:
+    parts = []
+    if req.evidence_ids:
+        parts.append(f"Evidence: {', '.join(req.evidence_ids)}.")
+    if req.source_ids:
+        parts.append(f"Sources: {', '.join(req.source_ids)}.")
+    if req.test_results:
+        parts.append(f"Tests: {', '.join(req.test_results)}.")
+    return " ".join(parts) if parts else "No evidence IDs, source IDs, or test results attached."
+
+
+def _generate_test_summary(req: ApprovalUnitBuildRequest) -> str:
+    if not req.test_results:
+        return "No test results provided."
+    return f"{', '.join(req.test_results)}."
+
+
+def _generate_decision_effect_summary(req: ApprovalUnitBuildRequest, if_approved: dict) -> str:
+    allowed = if_approved.get("allowed_actions", [])
+    still_blocked = if_approved.get("still_blocked_actions", [])
+    parts = []
+    if allowed:
+        parts.append(f"Approval allows: {', '.join(allowed)}.")
+    if still_blocked:
+        parts.append(f"Still blocked after approval: {', '.join(still_blocked)}.")
+    return " ".join(parts) if parts else "Approval unlocks the requested actions."
+
+
+def _build_canonical(
+    req: ApprovalUnitBuildRequest,
+    approval_question: str,
+    decision_options: List[str],
+    if_approved: dict,
+    if_rejected: dict,
+    if_request_rework: dict,
+    if_request_more_evidence: dict,
+) -> dict:
+    """Canonical dict for hashing. Excludes created_at for hash stability."""
+    return {
+        "approval_unit_type": req.approval_unit_type,
+        "source_type": req.source_type,
+        "source_id": req.source_id,
+        "finding_id": req.finding_id,
+        "claim_id": req.claim_id,
+        "patch_id": req.patch_id,
+        "payment_request_id": req.payment_request_id,
+        "deployment_request_id": req.deployment_request_id,
+        "memory_write_id": req.memory_write_id,
+        "tool_call_id": req.tool_call_id,
+        "evidence_ids": sorted(req.evidence_ids),
+        "source_ids": sorted(req.source_ids),
+        "test_results": sorted(req.test_results),
+        "risk_level": req.risk_level,
+        "approval_question": approval_question,
+        "decision_options": decision_options,
+        "blocked_actions_until_approval": req.blocked_actions_until_approval,
+        "allowed_human_actions": req.allowed_human_actions,
+        "if_approved": if_approved,
+        "if_rejected": if_rejected,
+        "if_request_rework": if_request_rework,
+        "if_request_more_evidence": if_request_more_evidence,
+        "request_id": req.request_id,
+        "task_id": req.task_id,
+    }
+
+
+def _sha256(data: dict) -> str:
+    canonical = json.dumps(data, sort_keys=True, ensure_ascii=False)
+    return "sha256:" + hashlib.sha256(canonical.encode()).hexdigest()
+
+
+# ─────────────────────────────────────────────
+# Endpoints
+# ─────────────────────────────────────────────
+
+@app.post("/api/approval-unit/build", response_model=ApprovalUnitBuildResponse)
+async def build_approval_unit(req: ApprovalUnitBuildRequest):
+    """
+    Build a minimal Approval Unit (Human Decision Contract) from an AI-generated output.
+
+    Approval Unit = Human Decision Contract.
+    Defines what the human is approving, what becomes allowed after approval,
+    what remains blocked, and what human action is suggested next.
+
+    v0.1: build-only. No approval execution, blockchain, or payments.
+    approval_question is generated by rule-based templates (not LLM).
+    """
+    approval_unit_id = "approval_" + uuid.uuid4().hex[:8]
+    decision_options = ["approve", "reject", "request_rework", "request_more_evidence", "defer", "escalate"]
+
+    approval_question = _generate_approval_question(req)
+    suggested = _generate_suggested_actions(req)
+    recommended_action, action_reason = _generate_recommended_action(req, suggested)
+    priority = _generate_priority(req.risk_level)
+    evidence_summary = _generate_evidence_summary(req)
+    test_summary = _generate_test_summary(req)
+    required_evidence = _generate_required_evidence(req)
+    required_checks = _generate_required_checks(req)
+
+    if_approved, if_rejected, if_request_rework, if_request_more_evidence, if_escalated = (
+        _generate_decision_effects(req)
+    )
+
+    decision_effect_summary = _generate_decision_effect_summary(req, if_approved)
+
+    canonical = _build_canonical(
+        req, approval_question, decision_options,
+        if_approved, if_rejected, if_request_rework, if_request_more_evidence,
+    )
+    approval_unit_hash = _sha256(canonical)
+
+    return ApprovalUnitBuildResponse(
+        approval_unit_id=approval_unit_id,
+        approval_unit_hash=approval_unit_hash,
+        approval_unit_type=req.approval_unit_type,
+        title=req.title,
+        approval_question=approval_question,
+        decision_required=" | ".join(decision_options),
+        decision_options=decision_options,
+        approver_role=req.approver_role,
+        priority=priority,
+        risk_level=req.risk_level,
+        summary=req.summary,
+        evidence_summary=evidence_summary,
+        required_evidence=required_evidence,
+        required_checks_before_approval=required_checks,
+        test_summary=test_summary,
+        regression_risk=req.regression_risk,
+        rollback_available=req.rollback_available,
+        suggested_human_actions=suggested,
+        recommended_human_action=recommended_action,
+        human_action_reason=action_reason,
+        allowed_human_actions=req.allowed_human_actions,
+        blocked_actions_until_approval=req.blocked_actions_until_approval,
+        if_approved=if_approved,
+        if_rejected=if_rejected,
+        if_request_rework=if_request_rework,
+        if_request_more_evidence=if_request_more_evidence,
+        if_escalated=if_escalated,
+        post_decision_route="depends_on_human_decision",
+        decision_effect_summary=decision_effect_summary,
+        audit_required=True,
+        blockchain_anchor_ready=True,
+        chain_anchor_status="not_anchored",
+        chain_tx_hash=None,
+        request_id=req.request_id,
+        task_id=req.task_id,
+        created_at=datetime.now(timezone.utc).isoformat(),
+    )
+
+
+@app.get("/")
+async def root():
+    return {
+        "name": "Agent Approval Unit Builder API",
+        "version": "0.1.0",
+        "endpoints": {
+            "POST /api/approval-unit/build": "Build an Approval Unit (human decision contract)",
+        },
+        "note": "v0.1 is build-only. No approval execution, blockchain, or payments.",
+        "core_concept": "Approval Unit = Human Decision Contract",
+    }
+
+
+@app.get("/health")
+async def health():
+    return {"status": "ok", "version": "0.1.0"}
