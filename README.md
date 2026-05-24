@@ -66,6 +66,16 @@ See `memory_context_shelf_spec.md` for detailed specifications.
   Tracks primary source lineage for claims to reduce multi-agent error reinforcement.
   Spec: source_lineage_tracker_spec.md
 
+- Evidence Coverage Gate
+  Checks whether AI-generated reports, memos, recommendations, and decision cards have sufficient source coverage for key claims.
+  Spec: agent_evidence_coverage_gate_spec.md
+  Status: Planned / design spec / not implemented
+
+- Gate Result Router
+  Routes gate results into workflow paths such as research, rework, human review, approval escalation, execution block, decision-use block, or log-only audit.
+  Spec: agent_gate_result_router_spec.md
+  Status: Planned / design spec / not implemented
+
 ---
 
 **All public APIs indexed in CDP Bazaar:**
