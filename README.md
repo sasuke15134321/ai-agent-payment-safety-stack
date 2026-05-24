@@ -76,9 +76,11 @@ Gate Result Router
   ↓
 Human Review Bridge
   ↓
-Human Review / Approval / Rework / Research
+Approval Unit Builder
   ↓
-Audit Log / Agent Memory
+Human Approval / Rejection / Rework / More Evidence / Escalation
+  ↓
+Audit Log / Agent Memory / Optional Blockchain Anchor
 ```
 
 ### Component roles
@@ -95,11 +97,14 @@ Audit Log / Agent Memory
 
 - **Human Review Bridge**: Converts routed gate results into human-readable review tasks for analysts, approvers, developers, auditors, or operators.
 
+- **Approval Unit Builder**: Converts routed review tasks or agent-generated candidates into minimal human decision contracts that define what is being approved, what actions become allowed, what remains blocked, and what human action is suggested next.
+
 ### Summary
 
 Gates detect issues.
 The router decides the next workflow path.
 The bridge turns that path into a human-reviewable task.
+The approval unit builder defines what the human is actually approving and what system actions are allowed or blocked after the decision.
 The stack is designed to reduce manual review load after AI agent actions, paid API calls, or decision-support outputs.
 
 ### For AI agents
@@ -112,6 +117,9 @@ Use this stack when an AI agent needs to:
 - route gate failures
 - reduce human review workload
 - preserve audit-ready workflow records
+- create minimal human approval units
+- suggest human-side actions before approval
+- preserve approval hashes for future audit or blockchain anchoring
 
 ---
 
@@ -142,6 +150,11 @@ Use this stack when an AI agent needs to:
 - Human Review Bridge
   Converts Gate Result Router outputs into human-readable review tasks for analysts, approvers, developers, auditors, or operators.
   Spec: agent_human_review_bridge_spec.md
+  Status: Planned / design spec / not implemented
+
+- Approval Unit Builder
+  Converts review tasks, findings, patches, payment requests, deployment proposals, memory writes, tool execution requests, or decision-support outputs into minimal human decision contracts.
+  Spec: agent_approval_unit_builder_spec.md
   Status: Planned / design spec / not implemented
 
 ---
