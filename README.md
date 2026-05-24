@@ -76,6 +76,11 @@ See `memory_context_shelf_spec.md` for detailed specifications.
   Spec: agent_gate_result_router_spec.md
   Status: Planned / design spec / not implemented
 
+- Human Review Bridge
+  Converts Gate Result Router outputs into human-readable review tasks for analysts, approvers, developers, auditors, or operators.
+  Spec: agent_human_review_bridge_spec.md
+  Status: Planned / design spec / not implemented
+
 ---
 
 **All public APIs indexed in CDP Bazaar:**
