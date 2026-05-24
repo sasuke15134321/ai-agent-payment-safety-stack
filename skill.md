@@ -36,7 +36,7 @@ Do not use this skill to:
 ## Main endpoint
 
 ```
-POST /api/approval-unit/build
+POST https://ai-agent-payment-safety-stack.onrender.com/api/approval-unit/build
 ```
 
 ## Minimum required inputs

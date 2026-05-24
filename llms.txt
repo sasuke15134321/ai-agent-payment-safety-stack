@@ -3,9 +3,13 @@
 This project provides AI agent control primitives for paid API calls, budget checks,
 evidence review, gate routing, human review, and approval unit generation.
 
+## Base URL
+
+https://ai-agent-payment-safety-stack.onrender.com
+
 ## Available API
 
-### POST /api/approval-unit/build
+### POST https://ai-agent-payment-safety-stack.onrender.com/api/approval-unit/build
 
 Builds a minimal human decision contract from an AI-generated candidate.
 

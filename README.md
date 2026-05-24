@@ -62,6 +62,8 @@ Converts AI-generated findings, patches, payment requests, deployment proposals,
 |---|---|
 | `POST /api/approval-unit/build` | Build a minimal human decision contract from an AI-generated output |
 
+**Public URL:** `https://ai-agent-payment-safety-stack.onrender.com/api/approval-unit/build`
+
 v0.1 is build-only:
 - It does not approve, reject, pay, deploy, write, or execute tools.
 - It does not send blockchain transactions.
@@ -71,8 +73,22 @@ v0.1 is build-only:
 
 ### Example request
 
+```bash
+curl -X POST https://ai-agent-payment-safety-stack.onrender.com/api/approval-unit/build \
+  -H "Content-Type: application/json" \
+  -d '{
+    "source_type": "security_patch",
+    "approval_unit_type": "security_patch_approval",
+    "title": "Approve patch for SQL injection in user API",
+    "summary": "Replace raw SQL interpolation with parameterized query.",
+    "risk_level": "high",
+    "rollback_available": true,
+    "blocked_actions_until_approval": ["merge_to_staging", "deploy_to_production"]
+  }'
+```
+
 ```json
-POST /api/approval-unit/build
+POST https://ai-agent-payment-safety-stack.onrender.com/api/approval-unit/build
 {
   "source_type": "security_patch",
   "approval_unit_type": "security_patch_approval",
@@ -211,7 +227,11 @@ Use this stack when an AI agent needs to:
 
 ## Deployment
 
-This FastAPI app can be deployed on Render or similar platforms.
+**Public API URL:** https://ai-agent-payment-safety-stack.onrender.com
+
+**API docs:** https://ai-agent-payment-safety-stack.onrender.com/docs
+
+This FastAPI app is deployed on Render.
 
 Start command:
 
@@ -221,9 +241,9 @@ uvicorn main:app --host 0.0.0.0 --port $PORT
 
 After deployment, check:
 
-- GET /docs
-- POST /api/approval-unit/build
-- GET /openapi.json
+- GET https://ai-agent-payment-safety-stack.onrender.com/docs
+- POST https://ai-agent-payment-safety-stack.onrender.com/api/approval-unit/build
+- GET https://ai-agent-payment-safety-stack.onrender.com/openapi.json
 
 v0.1 constraints remain the same:
 - no approval execution

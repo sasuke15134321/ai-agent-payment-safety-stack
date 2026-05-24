@@ -10,6 +10,10 @@ info:
     Use POST /api/approval-unit/build to convert AI-generated candidates into
     minimal human-approvable decision units.
 
+servers:
+  - url: https://ai-agent-payment-safety-stack.onrender.com
+    description: Production (Render)
+
 paths:
   /api/approval-unit/build:
     post:
