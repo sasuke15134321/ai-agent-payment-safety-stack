@@ -225,6 +225,29 @@ Use this stack when an AI agent needs to:
 
 ---
 
+## Live API Status
+
+The public Render deployment has been verified.
+
+Base URL: https://ai-agent-payment-safety-stack.onrender.com
+Docs: https://ai-agent-payment-safety-stack.onrender.com/docs
+
+Verified endpoint: POST /api/approval-unit/build
+
+Verified behavior:
+- HTTP 200 response
+- rule-based approval_question generation
+- recommended_human_action generation
+- stable approval_unit_hash generation
+- chain_anchor_status = not_anchored
+- staging merge can be allowed while production deployment remains blocked
+
+Example verified output:
+- approval_question: "Approve this security patch for staging merge?"
+- recommended_human_action: "approve_staging_only"
+- if_approved.allowed_actions: ["merge_to_staging"]
+- if_approved.still_blocked_actions: ["deploy_to_production"]
+
 ## Deployment
 
 **Public API URL:** https://ai-agent-payment-safety-stack.onrender.com
