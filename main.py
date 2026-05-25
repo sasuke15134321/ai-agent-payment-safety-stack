@@ -65,6 +65,7 @@ _ENDPOINT_DESCRIPTIONS = {
 # CDP Bazaar indexing extension
 _BAZAAR_EXTENSIONS = {
     "bazaar": {
+        "discoverable": True,
         "info": {
             "input": {
                 "type": "http",
