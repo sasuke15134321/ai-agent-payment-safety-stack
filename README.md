@@ -166,6 +166,8 @@ Source Lineage Tracker
   ↓
 Evidence Coverage Gate
   ↓
+Remediation Verification Gate
+  ↓
 Gate Result Router
   ↓
 Human Review Bridge
@@ -187,6 +189,8 @@ Audit Log / Agent Memory / Optional Blockchain Anchor
 
 - **Evidence Coverage Gate**: Checks whether AI-generated reports, memos, recommendations, and decision cards have sufficient source coverage.
 
+- **Remediation Verification Gate**: Checks AI-generated findings, patches, remediation plans, configuration changes, dependency updates, and deployment proposals before they are routed to human review or Approval Unit Builder. It verifies test results, security retest status, regression risk, rollback readiness, blast radius, and production risk.
+
 - **Gate Result Router**: Converts gate results into workflow routes such as research, rework, human review, approval escalation, execution block, decision-use block, or log-only audit.
 
 - **Human Review Bridge**: Converts routed gate results into human-readable review tasks for analysts, approvers, developers, auditors, or operators.
@@ -196,6 +200,7 @@ Audit Log / Agent Memory / Optional Blockchain Anchor
 ### Summary
 
 Gates detect issues.
+The Remediation Verification Gate checks whether AI-generated remediation candidates are ready to become human-reviewable or approval-unit-ready.
 The router decides the next workflow path.
 The bridge turns that path into a human-reviewable task.
 The approval unit builder defines what the human is actually approving and what system actions are allowed or blocked after the decision.
@@ -234,6 +239,11 @@ Use this stack when an AI agent needs to:
 - Evidence Coverage Gate
   Checks whether AI-generated reports, memos, recommendations, and decision cards have sufficient source coverage for key claims.
   Spec: agent_evidence_coverage_gate_spec.md
+  Status: Planned / design spec / not implemented
+
+- Remediation Verification Gate
+  Checks AI-generated remediation candidates before human review or approval unit generation, including test results, security retest, regression risk, rollback readiness, blast radius, and production risk.
+  Spec: agent_remediation_verification_gate_spec.md
   Status: Planned / design spec / not implemented
 
 - Gate Result Router
