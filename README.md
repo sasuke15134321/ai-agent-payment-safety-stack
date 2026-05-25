@@ -44,6 +44,8 @@ Human approval defines:
 
 The Approval Unit Builder generates human-readable decision contracts, not automatic execution.
 
+**→ See the [Security Patch Walkthrough](docs/walkthroughs/security_patch_walkthrough.md) to see how this works in practice.**
+
 ---
 
 ## End-to-End Governance Flow
@@ -67,6 +69,11 @@ Scoped Human Approval
 Controlled Execution
   (Only approved actions executed)
 ```
+
+**Interactive walkthroughs available:**
+- [Security Patch Walkthrough](docs/walkthroughs/security_patch_walkthrough.md) — How remediation gets verified and approved for staging
+- [Production Deploy Escalation](docs/walkthroughs/production_deploy_escalation.md) — Why production deployment requires separate governance
+- [Financial Approval Walkthrough](docs/walkthroughs/financial_approval_walkthrough.md) — How budget governance works for AI agent spending
 
 ---
 
@@ -116,6 +123,10 @@ Generates:
 **Docs:** https://ai-agent-payment-safety-stack.onrender.com/docs
 
 **CDP Bazaar:** Automatic indexing in progress
+
+**→ See the [Production Deploy Escalation walkthrough](docs/walkthroughs/production_deploy_escalation.md) to understand why staging and production approvals are different.**
+
+**→ See the [Financial Approval walkthrough](docs/walkthroughs/financial_approval_walkthrough.md) to see how approval contracts work for budget governance.
 
 ---
 
@@ -194,32 +205,55 @@ Audit Log / Agent Memory / Optional Blockchain Anchor
 
 The stack is tested through real governance scenarios.
 
-### Example: Security Patch Approval
+### Example Scenario Files
 
-See `examples/security_patch_example.json` — SQL injection fix scenario with evidence, test results, rollback available.
-
-See `docs/mockups/human_approval_mock_v1.md` — Visual representation of the approval interface.
-
-**Workflow:**
-```
-1. AI detects SQL injection in user API
-2. AI generates patch candidate
-3. POST /api/remediation/verify
-4. approval_unit_ready = true
-5. POST /api/approval-unit/build
-6. Human Decision Contract generated
-7. Human reviews: patch diff, test results, evidence, rollback plan
-8. Human approves for staging merge only
-9. Production deployment remains blocked
-10. Decision recorded in audit trail
-11. merge_to_staging allowed, deploy_to_production blocked
-```
-
-Other governance scenarios:
+* `examples/security_patch_example.json` — SQL injection fix with evidence, test results, rollback available
 * `examples/dependency_upgrade_example.json` — Fastapi upgrade scenario
 * `examples/staging_only_approval.json` — TLS certificate renewal
 * `examples/rollback_required_example.json` — Database migration
 * `examples/audit_trail_example.json` — Approved decision record
+
+### Interactive Governance Walkthroughs
+
+For a complete understanding of how governance works in practice, see the interactive walkthroughs:
+
+#### [Security Patch Walkthrough](docs/walkthroughs/security_patch_walkthrough.md)
+
+Learn how AI-generated remediation gets verified and prepared for human approval:
+
+* Remediation Verification Gate in action
+* How approval contracts are generated
+* What humans are actually approving
+* Why scoped approval (staging only) is safer than unrestricted approval
+* How production deployment is blocked by design
+
+**Key concept:** Approval is a scoped execution contract, not a button for unrestricted execution.
+
+#### [Production Deploy Escalation](docs/walkthroughs/production_deploy_escalation.md)
+
+Understand why production deployment is intentionally difficult:
+
+* Staging approval ≠ production approval
+* Why blast radius matters
+* How escalation workflow works
+* Multiple approver requirements
+* Change control procedures
+* Why this protects your organization
+
+**Key concept:** Production requires broader governance and multiple stakeholders.
+
+#### [Financial Approval Walkthrough](docs/walkthroughs/financial_approval_walkthrough.md)
+
+See how approval contracts work for budget governance and x402 payments:
+
+* Budget Guard API in action
+* How spending scope is defined
+* Currency and payment rail governance
+* Monthly budget review cycles
+* Why financial approval matters
+* Audit trail for compliance
+
+**Key concept:** Financial approval is also a scoped execution contract that prevents unauthorized spending.
 
 ---
 
