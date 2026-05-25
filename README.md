@@ -8,6 +8,55 @@ the critical boundary shifts from the model to the execution and access layer.
 Agent Control Primitives are small APIs placed at those boundaries —
 before tool calls, memory writes, payments, sandbox execution, and MCP access.
 
+## What this project does
+
+This project provides a live two-step AI agent control flow:
+
+1. Verify AI-generated remediation candidates before human approval.
+2. Convert verified candidates into minimal human decision contracts.
+
+The current v0.1 flow is publicly accessible through live APIs:
+
+```text
+AI-generated finding / patch / remediation plan
+  ↓
+POST /api/remediation/verify
+  ↓
+approval_unit_ready = true
+  ↓
+POST /api/approval-unit/build
+  ↓
+Human Decision Contract
+```
+
+### Live APIs
+
+* Remediation Verification Gate API
+
+  * https://ai-agent-payment-safety-stack.onrender.com/api/remediation/verify
+
+* Approval Unit Builder API
+
+  * https://ai-agent-payment-safety-stack.onrender.com/api/approval-unit/build
+
+### Current v0.1 constraints
+
+* verification only
+* approval-unit generation only
+* no automatic deployment
+* no automatic approval execution
+* no payment execution
+* no blockchain transaction execution
+* no autonomous production release
+
+### Intended use cases
+
+* AI-generated security remediation review
+* deployment approval preparation
+* staged rollout approval flows
+* human-in-the-loop AI operations
+* audit-ready AI decision workflows
+
 ## Why now
 
 CDP Bazaar (May 2026, 48,000+ APIs):
