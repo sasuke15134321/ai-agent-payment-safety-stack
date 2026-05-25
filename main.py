@@ -607,6 +607,335 @@ async def build_approval_unit(req: ApprovalUnitBuildRequest):
     )
 
 
+# ─────────────────────────────────────────────
+# Remediation Verification Gate v0.1
+# ─────────────────────────────────────────────
+
+class RemediationVerifyRequest(BaseModel):
+    remediation_id: str
+    finding_id: Optional[str] = None
+    source_type: str
+    source_id: Optional[str] = None
+    remediation_type: str
+    title: str
+    finding_summary: str
+    remediation_summary: str
+    patch_id: Optional[str] = None
+    patch_diff_id: Optional[str] = None
+    configuration_change_id: Optional[str] = None
+    dependency_update_id: Optional[str] = None
+    affected_files: List[str] = []
+    affected_services: List[str] = []
+    affected_environment: Optional[str] = None
+    severity: str
+    risk_level: str
+    exploitability: Optional[str] = None
+    evidence_ids: List[str] = []
+    source_ids: List[str] = []
+    test_results: List[str] = []
+    security_retest_results: List[str] = []
+    static_analysis_results: List[str] = []
+    dynamic_analysis_results: List[str] = []
+    regression_test_results: List[str] = []
+    rollback_plan_id: Optional[str] = None
+    rollback_available: Optional[bool] = None
+    blast_radius: Optional[str] = None
+    production_impact: Optional[str] = None
+    staging_tested: Optional[bool] = None
+    production_deploy_requested: bool = False
+    generated_by_agent_id: Optional[str] = None
+    request_id: Optional[str] = None
+    task_id: Optional[str] = None
+
+
+class RemediationVerifyResponse(BaseModel):
+    gate_name: str
+    remediation_id: str
+    finding_id: Optional[str]
+    remediation_type: str
+    decision: str
+    verification_status: str
+    readiness_level: str
+    risk_level: str
+    severity: str
+    evidence_status: str
+    test_status: str
+    security_retest_status: str
+    regression_status: str
+    rollback_status: str
+    blast_radius: Optional[str]
+    production_risk: str
+    allowed_next_steps: List[str]
+    blocked_next_steps: List[str]
+    recommended_route: str
+    recommended_human_action: str
+    human_action_reason: str
+    required_additional_evidence: List[str]
+    required_rework_items: List[str]
+    approval_unit_ready: bool
+    approval_unit_type_suggestion: Optional[str]
+    blocked_actions_until_approval: List[str]
+    audit_required: bool
+    blockchain_anchor_ready: bool
+    request_id: Optional[str]
+    task_id: Optional[str]
+    created_at: str
+
+
+def _rv_evidence_status(req: RemediationVerifyRequest) -> str:
+    if req.evidence_ids or req.source_ids:
+        return "sufficient"
+    return "missing"
+
+
+def _rv_test_status(req: RemediationVerifyRequest) -> str:
+    if req.test_results:
+        return "passed"
+    return "missing"
+
+
+def _rv_security_retest_status(req: RemediationVerifyRequest) -> str:
+    if req.security_retest_results:
+        return "passed"
+    if req.severity.lower() in ("high", "critical"):
+        return "required"
+    return "missing"
+
+
+def _rv_regression_status(req: RemediationVerifyRequest) -> str:
+    if req.regression_test_results:
+        return "passed"
+    return "missing"
+
+
+def _rv_rollback_status(req: RemediationVerifyRequest) -> str:
+    if req.rollback_available is True:
+        if req.rollback_plan_id:
+            return "available"
+        return "available_without_plan_id"
+    return "missing"
+
+
+def _rv_production_risk(req: RemediationVerifyRequest) -> str:
+    if req.production_deploy_requested:
+        if req.risk_level.lower() in ("high", "critical"):
+            return "blocked"
+        return "requires_review"
+    return "not_requested"
+
+
+def _rv_decision(
+    req: RemediationVerifyRequest,
+    evidence_status: str,
+    test_status: str,
+    security_retest_status: str,
+    rollback_status: str,
+) -> tuple:
+    if evidence_status == "missing":
+        return (
+            "require_more_evidence",
+            "request_more_evidence",
+            "Evidence IDs and source IDs are missing.",
+        )
+    if test_status == "missing":
+        return (
+            "require_security_retest",
+            "request_tests",
+            "Test results are missing.",
+        )
+    if security_retest_status == "required":
+        return (
+            "require_security_retest",
+            "request_security_retest",
+            "Security retest is required for high/critical severity.",
+        )
+    if rollback_status == "missing":
+        return (
+            "require_rollback_plan",
+            "request_rollback_plan",
+            "Rollback plan is missing or unavailable.",
+        )
+    if req.production_deploy_requested and req.risk_level.lower() in ("high", "critical"):
+        return (
+            "block_production_deploy",
+            "escalate_to_security_lead",
+            "High or critical risk production deploy requires escalation.",
+        )
+    if (
+        evidence_status == "sufficient"
+        and test_status == "passed"
+        and security_retest_status == "passed"
+        and rollback_status in ("available", "available_without_plan_id")
+        and not req.production_deploy_requested
+    ):
+        return (
+            "route_to_approval_unit_builder",
+            "approve_staging_only",
+            "All checks passed. Ready for human approval at staging level.",
+        )
+    return (
+        "pass_with_warnings",
+        "approve_after_review",
+        "Some checks are incomplete. Human review is recommended before proceeding.",
+    )
+
+
+def _rv_approval_unit_ready(decision: str) -> bool:
+    return decision in ("route_to_approval_unit_builder", "pass_with_warnings", "block_production_deploy")
+
+
+def _rv_readiness_level(
+    approval_unit_ready: bool,
+    evidence_status: str,
+    test_status: str,
+    rollback_status: str,
+) -> str:
+    if approval_unit_ready:
+        return "human_approval_ready"
+    if evidence_status == "missing":
+        return "needs_more_evidence"
+    if test_status == "missing":
+        return "needs_testing"
+    if rollback_status == "missing":
+        return "needs_rollback_plan"
+    return "needs_review"
+
+
+def _rv_verification_status(decision: str) -> str:
+    if decision == "route_to_approval_unit_builder":
+        return "verified"
+    if decision == "pass_with_warnings":
+        return "verified_with_warnings"
+    if decision == "block_production_deploy":
+        return "blocked"
+    return "incomplete"
+
+
+def _rv_recommended_route(decision: str) -> str:
+    return {
+        "route_to_approval_unit_builder": "approval_unit_builder",
+        "require_more_evidence": "route_to_research",
+        "require_rework": "route_to_rework",
+        "require_security_retest": "route_to_rework",
+        "require_rollback_plan": "route_to_rework",
+        "block_production_deploy": "escalate_to_approver",
+        "pass_with_warnings": "route_to_human_review",
+        "block_execution": "block_execution",
+    }.get(decision, "route_to_human_review")
+
+
+def _rv_next_steps(decision: str) -> tuple:
+    if decision == "route_to_approval_unit_builder":
+        return (
+            ["create_approval_unit", "allow_staging_merge_after_approval"],
+            ["deploy_to_production"],
+        )
+    if decision == "block_production_deploy":
+        return (["create_approval_unit_for_staging"], ["deploy_to_production"])
+    if decision == "require_more_evidence":
+        return (
+            ["collect_more_evidence"],
+            ["create_approval_unit", "merge_to_staging", "deploy_to_production"],
+        )
+    if decision == "require_security_retest":
+        return (
+            ["run_tests", "run_security_retest"],
+            ["create_approval_unit", "merge_to_staging", "deploy_to_production"],
+        )
+    if decision == "require_rollback_plan":
+        return (
+            ["create_rollback_plan"],
+            ["create_approval_unit", "merge_to_staging", "deploy_to_production"],
+        )
+    return (["route_to_human_review"], ["deploy_to_production"])
+
+
+def _rv_approval_unit_type_suggestion(remediation_type: str) -> str:
+    return {
+        "patch_candidate": "security_patch_approval",
+        "remediation_plan": "remediation_plan_approval",
+        "configuration_change": "deployment_approval",
+        "dependency_update": "deployment_approval",
+        "deployment_proposal": "deployment_approval",
+    }.get(remediation_type, "remediation_plan_approval")
+
+
+@app.post("/api/remediation/verify", response_model=RemediationVerifyResponse)
+async def verify_remediation(req: RemediationVerifyRequest):
+    """
+    Verify an AI-generated remediation candidate before routing to human review or Approval Unit Builder.
+
+    v0.1: rule-based verification only.
+    No patch application, deployment, approval execution, payment execution,
+    memory write, tool execution, or blockchain transaction.
+    """
+    evidence_status = _rv_evidence_status(req)
+    test_status = _rv_test_status(req)
+    security_retest_status = _rv_security_retest_status(req)
+    regression_status = _rv_regression_status(req)
+    rollback_status = _rv_rollback_status(req)
+    production_risk = _rv_production_risk(req)
+
+    decision, recommended_human_action, human_action_reason = _rv_decision(
+        req, evidence_status, test_status, security_retest_status, rollback_status
+    )
+
+    approval_unit_ready = _rv_approval_unit_ready(decision)
+    readiness_level = _rv_readiness_level(
+        approval_unit_ready, evidence_status, test_status, rollback_status
+    )
+    verification_status = _rv_verification_status(decision)
+    recommended_route = _rv_recommended_route(decision)
+    allowed_next_steps, blocked_next_steps = _rv_next_steps(decision)
+    approval_unit_type_suggestion = _rv_approval_unit_type_suggestion(req.remediation_type)
+
+    required_additional_evidence: List[str] = []
+    if evidence_status == "missing":
+        required_additional_evidence = ["evidence_ids", "source_ids"]
+
+    required_rework_items: List[str] = []
+    if test_status == "missing":
+        required_rework_items.append("test_results_required")
+    if security_retest_status == "required":
+        required_rework_items.append("security_retest_required")
+    if rollback_status == "missing":
+        required_rework_items.append("rollback_plan_required")
+
+    return RemediationVerifyResponse(
+        gate_name="remediation_verification_gate",
+        remediation_id=req.remediation_id,
+        finding_id=req.finding_id,
+        remediation_type=req.remediation_type,
+        decision=decision,
+        verification_status=verification_status,
+        readiness_level=readiness_level,
+        risk_level=req.risk_level,
+        severity=req.severity,
+        evidence_status=evidence_status,
+        test_status=test_status,
+        security_retest_status=security_retest_status,
+        regression_status=regression_status,
+        rollback_status=rollback_status,
+        blast_radius=req.blast_radius,
+        production_risk=production_risk,
+        allowed_next_steps=allowed_next_steps,
+        blocked_next_steps=blocked_next_steps,
+        recommended_route=recommended_route,
+        recommended_human_action=recommended_human_action,
+        human_action_reason=human_action_reason,
+        required_additional_evidence=required_additional_evidence,
+        required_rework_items=required_rework_items,
+        approval_unit_ready=approval_unit_ready,
+        approval_unit_type_suggestion=approval_unit_type_suggestion,
+        blocked_actions_until_approval=["merge_to_staging", "deploy_to_production"],
+        audit_required=True,
+        blockchain_anchor_ready=True,
+        request_id=req.request_id,
+        task_id=req.task_id,
+        created_at=datetime.now(timezone.utc).isoformat(),
+    )
+
+
 @app.get("/")
 async def root():
     return {

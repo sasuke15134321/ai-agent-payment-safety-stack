@@ -52,6 +52,48 @@ Primitives for deciding what context, past logs, and source-of-truth to check be
 
 See `memory_context_shelf_spec.md` for detailed specifications.
 
+## Remediation Verification Gate API v0.1
+
+Verifies AI-generated remediation candidates before they are routed to human review or Approval Unit Builder.
+
+**Endpoint:** `POST /api/remediation/verify`
+
+**Public URL:** `https://ai-agent-payment-safety-stack.onrender.com/api/remediation/verify`
+
+Use it for:
+- AI-generated security findings
+- patch candidates
+- remediation plans
+- configuration changes
+- dependency updates
+- deployment proposals
+
+Checks:
+- evidence status
+- test results
+- security retest status
+- regression status
+- rollback readiness
+- blast radius
+- production risk
+- approval_unit_ready
+
+v0.1 constraints:
+- rule-based verification only
+- no patch application
+- no deployment
+- no approval execution
+- no payment execution
+- no memory write
+- no tool execution
+- no blockchain transaction
+
+Relationship:
+This API is designed to run before Approval Unit Builder.
+If `approval_unit_ready = true`, the result can be converted into an Approval Unit.
+
+---
+
 ## Approval Unit Builder API v0.1
 
 Converts AI-generated findings, patches, payment requests, deployment proposals, memory writes, tool execution requests, or decision-support outputs into minimal human decision contracts.
@@ -244,7 +286,7 @@ Use this stack when an AI agent needs to:
 - Remediation Verification Gate
   Checks AI-generated remediation candidates before human review or approval unit generation, including test results, security retest, regression risk, rollback readiness, blast radius, and production risk.
   Spec: agent_remediation_verification_gate_spec.md
-  Status: Planned / design spec / not implemented
+  Status: v0.1 API available: POST /api/remediation/verify
 
 - Gate Result Router
   Routes gate results into workflow paths such as research, rework, human review, approval escalation, execution block, decision-use block, or log-only audit.

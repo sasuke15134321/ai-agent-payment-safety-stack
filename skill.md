@@ -1,3 +1,104 @@
+# Skill: Remediation Verification Gate
+
+## Purpose
+
+Use this skill to verify an AI-generated remediation candidate before routing it to human review or Approval Unit Builder.
+
+This Gate checks whether a finding, patch, remediation plan, configuration change, dependency update, or deployment proposal is ready for human approval.
+
+## When to use
+
+Use this skill when:
+- an AI agent has generated a security finding, patch candidate, or remediation plan
+- you need to verify test results, security retest status, rollback readiness, and production risk before human review
+- you want to determine if a remediation candidate is `approval_unit_ready`
+- you need to block a production deploy for high/critical risk candidates
+- you want to route the candidate to the correct next step (research / rework / human review / approval unit)
+
+## When not to use
+
+Do not use this skill to:
+- apply patches or code changes
+- deploy infrastructure
+- execute approvals or rejections
+- process x402 / JPYC / USDC payments
+- write to memory
+- execute tool calls
+- send blockchain transactions
+
+## Main endpoint
+
+POST https://ai-agent-payment-safety-stack.onrender.com/api/remediation/verify
+
+## Required inputs
+
+- `remediation_id` — unique ID for this remediation candidate
+- `source_type` — type of the source (e.g. security_patch)
+- `remediation_type` — one of: patch_candidate, remediation_plan, configuration_change, dependency_update, deployment_proposal
+- `title` — short title
+- `finding_summary` — what was found
+- `remediation_summary` — what the agent proposes
+- `severity` — low / medium / high / critical
+- `risk_level` — low / medium / high / critical
+
+## Recommended inputs
+
+- `evidence_ids` — list of evidence or finding IDs
+- `source_ids` — list of source references
+- `test_results` — list of test outcomes
+- `security_retest_results` — list of security retest outcomes
+- `regression_test_results` — list of regression test outcomes
+- `rollback_plan_id` — ID of the rollback plan
+- `rollback_available` — whether rollback is available
+- `production_deploy_requested` — whether production deploy is being requested
+- `request_id` / `task_id` / `generated_by_agent_id` — for traceability
+
+## Output
+
+The API returns a Remediation Verification Result containing:
+- `decision` — route_to_approval_unit_builder / require_more_evidence / require_security_retest / require_rollback_plan / block_production_deploy / pass_with_warnings
+- `verification_status` — verified / verified_with_warnings / blocked / incomplete
+- `readiness_level` — human_approval_ready / needs_more_evidence / needs_testing / needs_rollback_plan / needs_review
+- `evidence_status` / `test_status` / `security_retest_status` / `regression_status` / `rollback_status` — individual check results
+- `production_risk` — not_requested / requires_review / blocked
+- `allowed_next_steps` / `blocked_next_steps` — what can and cannot proceed
+- `recommended_human_action` — single recommended action
+- `approval_unit_ready` — true if ready to pass to Approval Unit Builder
+- `approval_unit_type_suggestion` — suggested approval unit type for Approval Unit Builder
+- `blocked_actions_until_approval` — always includes merge_to_staging and deploy_to_production
+
+## v0.1 constraints
+
+- Rule-based verification only. No LLM-generated output.
+- No patch application, deployment, approval execution, or payment.
+- No memory write, tool execution, or blockchain transaction.
+- `blockchain_anchor_ready = true` (readiness flag only).
+- `audit_required = true`.
+
+## Next step: Approval Unit Builder
+
+If `approval_unit_ready = true`, call Approval Unit Builder next:
+
+POST https://ai-agent-payment-safety-stack.onrender.com/api/approval-unit/build
+
+Pass the remediation candidate fields as the Approval Unit input to create a minimal human decision contract.
+
+## Safety chain position
+
+```
+AI Agent generates remediation candidate
+  ↓
+Remediation Verification Gate  ← this skill
+  ↓ (if approval_unit_ready = true)
+Approval Unit Builder
+  ↓
+Human Approver
+  ↓
+Audit Log / Agent Memory
+```
+
+---
+
 # Skill: Approval Unit Builder
 
 ## Purpose

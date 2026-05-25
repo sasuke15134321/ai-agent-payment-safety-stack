@@ -79,6 +79,50 @@ Use this API when an AI agent needs to create a minimal human decision contract 
 
 Do not assume this API performs approval or execution. It only builds the Approval Unit.
 
+## Remediation Verification Gate API v0.1
+
+### POST https://ai-agent-payment-safety-stack.onrender.com/api/remediation/verify
+
+Verifies AI-generated remediation candidates before they are routed to human review or Approval Unit Builder.
+
+Use this endpoint when an AI agent has generated:
+- security findings
+- patch candidates
+- remediation plans
+- configuration changes
+- dependency updates
+- deployment proposals
+
+and needs to verify whether the candidate is ready for human approval.
+
+Do not use this endpoint to:
+- apply patches
+- deploy code
+- execute approvals
+- process payments
+- write to memory
+- execute tools
+- send blockchain transactions
+
+v0.1 behavior:
+- rule-based verification only
+- checks evidence, tests, security retest, rollback, blast radius, and production risk
+- returns a decision and approval_unit_ready flag
+- no LLM-generated output
+- no external side effects
+
+Output:
+- decision: route_to_approval_unit_builder / require_more_evidence / require_security_retest / require_rollback_plan / block_production_deploy / pass_with_warnings
+- approval_unit_ready: true if the candidate can be passed to Approval Unit Builder
+- readiness_level: human_approval_ready / needs_more_evidence / needs_testing / needs_rollback_plan / needs_review
+- recommended_human_action: the suggested next action for the human reviewer
+- allowed_next_steps / blocked_next_steps: what can and cannot proceed
+
+Relationship to Approval Unit Builder:
+This API runs BEFORE Approval Unit Builder.
+If approval_unit_ready = true, pass the remediation result to Approval Unit Builder
+(POST /api/approval-unit/build) to create a minimal human decision contract.
+
 ## Related primitives (planned)
 
 - Human Review Bridge: converts Gate Result Router outputs into review tasks

@@ -91,6 +91,82 @@ paths:
               schema:
                 $ref: '#/components/schemas/ApprovalUnitBuildResponse'
 
+  /api/remediation/verify:
+    post:
+      summary: Verify an AI-generated remediation candidate before routing to human review.
+      description: >
+        Rule-based verification of AI-generated findings, patches, remediation plans,
+        configuration changes, dependency updates, and deployment proposals.
+
+        Checks evidence status, test results, security retest status, regression status,
+        rollback readiness, blast radius, and production risk.
+
+        Returns a decision (route_to_approval_unit_builder / require_more_evidence /
+        require_security_retest / require_rollback_plan / block_production_deploy /
+        pass_with_warnings) and approval_unit_ready flag.
+
+        If approval_unit_ready = true, the result can be passed to Approval Unit Builder.
+
+        v0.1 constraints — rule-based verification only:
+        - no patch application
+        - no deployment
+        - no approval execution
+        - no payment execution
+        - no memory write
+        - no tool execution
+        - no blockchain transaction
+      operationId: verifyRemediation
+      tags:
+        - Remediation Verification Gate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemediationVerifyRequest'
+            example:
+              remediation_id: remediation_001
+              finding_id: finding_001
+              source_type: security_patch
+              remediation_type: patch_candidate
+              title: SQL injection fix for user API
+              finding_summary: Potential SQL injection in user lookup endpoint.
+              remediation_summary: Replace raw SQL interpolation with parameterized query.
+              patch_id: patch_001
+              affected_files:
+                - api/user.py
+              affected_services:
+                - user-api
+              affected_environment: staging
+              severity: critical
+              risk_level: high
+              evidence_ids:
+                - mythos_finding_001
+                - codeql_001
+              source_ids:
+                - "repo:user-api"
+                - "scanner:codeql"
+              test_results:
+                - unit_passed
+                - integration_passed
+              security_retest_results:
+                - security_retest_passed
+              regression_test_results:
+                - regression_passed
+              rollback_plan_id: rollback_001
+              rollback_available: true
+              blast_radius: single_service
+              production_deploy_requested: false
+              request_id: req_123
+              task_id: security_remediation_001
+      responses:
+        '200':
+          description: Verification completed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RemediationVerifyResponse'
+
   /:
     get:
       summary: API root
@@ -331,6 +407,230 @@ components:
           type: string
           nullable: true
           description: "Always null in v0.1"
+        request_id:
+          type: string
+          nullable: true
+        task_id:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    RemediationVerifyRequest:
+      type: object
+      required:
+        - remediation_id
+        - source_type
+        - remediation_type
+        - title
+        - finding_summary
+        - remediation_summary
+        - severity
+        - risk_level
+      properties:
+        remediation_id:
+          type: string
+        finding_id:
+          type: string
+          nullable: true
+        source_type:
+          type: string
+        source_id:
+          type: string
+          nullable: true
+        remediation_type:
+          type: string
+          description: "One of: patch_candidate, remediation_plan, configuration_change, dependency_update, deployment_proposal"
+        title:
+          type: string
+        finding_summary:
+          type: string
+        remediation_summary:
+          type: string
+        patch_id:
+          type: string
+          nullable: true
+        patch_diff_id:
+          type: string
+          nullable: true
+        configuration_change_id:
+          type: string
+          nullable: true
+        dependency_update_id:
+          type: string
+          nullable: true
+        affected_files:
+          type: array
+          items:
+            type: string
+          default: []
+        affected_services:
+          type: array
+          items:
+            type: string
+          default: []
+        affected_environment:
+          type: string
+          nullable: true
+        severity:
+          type: string
+          description: "One of: low, medium, high, critical"
+        risk_level:
+          type: string
+          description: "One of: low, medium, high, critical"
+        exploitability:
+          type: string
+          nullable: true
+        evidence_ids:
+          type: array
+          items:
+            type: string
+          default: []
+        source_ids:
+          type: array
+          items:
+            type: string
+          default: []
+        test_results:
+          type: array
+          items:
+            type: string
+          default: []
+        security_retest_results:
+          type: array
+          items:
+            type: string
+          default: []
+        static_analysis_results:
+          type: array
+          items:
+            type: string
+          default: []
+        dynamic_analysis_results:
+          type: array
+          items:
+            type: string
+          default: []
+        regression_test_results:
+          type: array
+          items:
+            type: string
+          default: []
+        rollback_plan_id:
+          type: string
+          nullable: true
+        rollback_available:
+          type: boolean
+          nullable: true
+        blast_radius:
+          type: string
+          nullable: true
+        production_impact:
+          type: string
+          nullable: true
+        staging_tested:
+          type: boolean
+          nullable: true
+        production_deploy_requested:
+          type: boolean
+          default: false
+        generated_by_agent_id:
+          type: string
+          nullable: true
+        request_id:
+          type: string
+          nullable: true
+        task_id:
+          type: string
+          nullable: true
+
+    RemediationVerifyResponse:
+      type: object
+      properties:
+        gate_name:
+          type: string
+        remediation_id:
+          type: string
+        finding_id:
+          type: string
+          nullable: true
+        remediation_type:
+          type: string
+        decision:
+          type: string
+          description: >
+            One of: route_to_approval_unit_builder, require_more_evidence,
+            require_security_retest, require_rollback_plan,
+            block_production_deploy, pass_with_warnings
+        verification_status:
+          type: string
+          description: "One of: verified, verified_with_warnings, blocked, incomplete"
+        readiness_level:
+          type: string
+          description: "One of: human_approval_ready, needs_more_evidence, needs_testing, needs_rollback_plan, needs_review"
+        risk_level:
+          type: string
+        severity:
+          type: string
+        evidence_status:
+          type: string
+          description: "One of: sufficient, missing"
+        test_status:
+          type: string
+          description: "One of: passed, missing"
+        security_retest_status:
+          type: string
+          description: "One of: passed, required, missing"
+        regression_status:
+          type: string
+          description: "One of: passed, missing"
+        rollback_status:
+          type: string
+          description: "One of: available, available_without_plan_id, missing"
+        blast_radius:
+          type: string
+          nullable: true
+        production_risk:
+          type: string
+          description: "One of: not_requested, requires_review, blocked"
+        allowed_next_steps:
+          type: array
+          items:
+            type: string
+        blocked_next_steps:
+          type: array
+          items:
+            type: string
+        recommended_route:
+          type: string
+        recommended_human_action:
+          type: string
+        human_action_reason:
+          type: string
+        required_additional_evidence:
+          type: array
+          items:
+            type: string
+        required_rework_items:
+          type: array
+          items:
+            type: string
+        approval_unit_ready:
+          type: boolean
+        approval_unit_type_suggestion:
+          type: string
+          nullable: true
+        blocked_actions_until_approval:
+          type: array
+          items:
+            type: string
+        audit_required:
+          type: boolean
+          description: "Always true in v0.1"
+        blockchain_anchor_ready:
+          type: boolean
+          description: "Always true in v0.1 (readiness flag only)"
         request_id:
           type: string
           nullable: true
