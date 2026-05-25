@@ -92,6 +92,53 @@ Relationship:
 This API is designed to run before Approval Unit Builder.
 If `approval_unit_ready = true`, the result can be converted into an Approval Unit.
 
+### Live API status
+
+The public Render deployment has been verified.
+
+Endpoint:
+https://ai-agent-payment-safety-stack.onrender.com/api/remediation/verify
+
+Verified behavior:
+- HTTP 200 response
+- decision = "route_to_approval_unit_builder"
+- approval_unit_ready = true
+- recommended_human_action = "approve_staging_only"
+- verification_status = "verified"
+- readiness_level = "human_approval_ready"
+- deploy_to_production remains blocked
+
+v0.1 rule-based verification only. No patch application, deployment, approval execution, or payments.
+
+---
+
+## Two-step remediation approval flow
+
+1. Verify remediation candidate
+
+POST /api/remediation/verify
+
+The gate checks evidence, tests, security retest, regression status, rollback readiness, blast radius, and production risk.
+Returns decision and approval_unit_ready flag.
+
+2. Build approval unit
+
+POST /api/approval-unit/build
+
+If approval_unit_ready = true, the result can be converted into a minimal human decision contract.
+
+Flow:
+
+```
+AI-generated patch
+  ↓
+Remediation Verification Gate
+  ↓
+Approval Unit Builder
+  ↓
+Human Approval / Rejection / Rework / More Evidence / Escalation
+```
+
 ---
 
 ## Approval Unit Builder API v0.1

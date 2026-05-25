@@ -75,6 +75,15 @@ The API returns a Remediation Verification Result containing:
 - `blockchain_anchor_ready = true` (readiness flag only).
 - `audit_required = true`.
 
+## Remediation Verification Gate live endpoint
+
+POST https://ai-agent-payment-safety-stack.onrender.com/api/remediation/verify
+
+Use before:
+POST https://ai-agent-payment-safety-stack.onrender.com/api/approval-unit/build
+
+When approval_unit_ready = true, the agent may route the result to Approval Unit Builder to create a human decision contract.
+
 ## Next step: Approval Unit Builder
 
 If `approval_unit_ready = true`, call Approval Unit Builder next:

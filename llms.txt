@@ -79,6 +79,36 @@ Use this API when an AI agent needs to create a minimal human decision contract 
 
 Do not assume this API performs approval or execution. It only builds the Approval Unit.
 
+## Live remediation verification API
+
+Endpoint:
+https://ai-agent-payment-safety-stack.onrender.com/api/remediation/verify
+
+Use this endpoint before Approval Unit Builder when an AI agent has generated a patch candidate, remediation plan, configuration change, dependency update, or deployment proposal.
+
+Verified behavior:
+- returns HTTP 200
+- can return decision = route_to_approval_unit_builder
+- can return approval_unit_ready = true
+- can recommend approve_staging_only
+- keeps deploy_to_production blocked when appropriate
+
+Next recommended step:
+If approval_unit_ready = true, call:
+
+https://ai-agent-payment-safety-stack.onrender.com/api/approval-unit/build
+
+Do not use this endpoint to:
+- apply patches
+- deploy code
+- approve automatically
+- execute payments
+- write memory
+- execute tools
+- send blockchain transactions
+
+---
+
 ## Remediation Verification Gate API v0.1
 
 ### POST https://ai-agent-payment-safety-stack.onrender.com/api/remediation/verify
