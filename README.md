@@ -1,74 +1,231 @@
-# Agent Control Primitives
+# AI Operational Governance Layer
 
-Small composable APIs for controlling AI agent actions at external boundaries.
+Control verification, decision preparation, and scoped execution for AI agent actions.
 
-As AI agents connect to tools, MCP servers, sandboxes, memory, payments, and external APIs,
-the critical boundary shifts from the model to the execution and access layer.
+---
 
-Agent Control Primitives are small APIs placed at those boundaries —
-before tool calls, memory writes, payments, sandbox execution, and MCP access.
+## Why this exists
 
-## What this project does
+AI agents can already:
 
-This project provides a live two-step AI agent control flow:
+* generate patches
+* modify infrastructure
+* trigger workflows
+* spend budgets
 
-1. Verify AI-generated remediation candidates before human approval.
-2. Convert verified candidates into minimal human decision contracts.
+But the unsolved problem is: **How humans safely govern those actions.**
 
-The current v0.1 flow is publicly accessible through live APIs:
+This project focuses on:
 
-```text
-AI-generated finding / patch / remediation plan
+* **verification** — Is the remediation ready for human review?
+* **human decision preparation** — What exactly is the human approving?
+* **scoped execution governance** — What becomes allowed, what remains blocked?
+
+Not a production-ready autonomous AI system.
+Not a fully autonomous governance layer.
+Not an autonomous deployment platform.
+
+This is intentionally human-centric. Humans remain responsible.
+
+---
+
+## Human Decision Contract — Core Concept
+
+**Approval is not a button.**
+
+**Approval is a scoped execution contract.**
+
+Human approval defines:
+
+* what becomes allowed
+* what remains blocked  
+* what environment scope is permitted
+* what still requires escalation
+
+The Approval Unit Builder generates human-readable decision contracts, not automatic execution.
+
+---
+
+## End-to-End Governance Flow
+
+```
+AI-generated remediation
   ↓
-POST /api/remediation/verify
+Remediation Verification Gate
+  (Is this ready for human approval?)
   ↓
 approval_unit_ready = true
   ↓
-POST /api/approval-unit/build
+Approval Unit Builder API
+  (What exactly is the human approving?)
   ↓
 Human Decision Contract
+  ↓
+Scoped Human Approval
+  (Approve / Reject / Request Rework / Escalate)
+  ↓
+Controlled Execution
+  (Only approved actions executed)
 ```
 
-### Live APIs
+---
 
-* Remediation Verification Gate API
+## Two Live APIs — Governance Layer
 
-  * https://ai-agent-payment-safety-stack.onrender.com/api/remediation/verify
+### Remediation Verification Gate API
 
-* Approval Unit Builder API
+**Public URL:** `https://ai-agent-payment-safety-stack.onrender.com/api/remediation/verify`
 
-  * https://ai-agent-payment-safety-stack.onrender.com/api/approval-unit/build
+**Question:** Can this remediation safely move to human approval?
 
-### Current v0.1 constraints
+Checks:
+* evidence status
+* test results
+* security retest status
+* regression status
+* rollback readiness
+* blast radius
+* production risk
+* approval_unit_ready
 
-* verification only
-* approval-unit generation only
-* no automatic deployment
-* no automatic approval execution
-* no payment execution
-* no blockchain transaction execution
-* no autonomous production release
+Returns: decision, verification_status, readiness_level, allowed_next_steps, blocked_next_steps
 
-### Intended use cases
+**v0.1 constraint:** Rule-based verification only. No patch application, no deployment, no approval execution.
 
-* AI-generated security remediation review
-* deployment approval preparation
-* staged rollout approval flows
-* human-in-the-loop AI operations
-* audit-ready AI decision workflows
+---
 
-## End-to-end examples
+### Approval Unit Builder API
 
-Example flow:
+**Public URL:** `https://ai-agent-payment-safety-stack.onrender.com/api/approval-unit/build`
 
-```text
-1. POST /api/remediation/verify
-2. approval_unit_ready = true
-3. POST /api/approval-unit/build
-4. Human Decision Contract generated
+**Question:** What exactly is the human approving?
+
+Generates:
+* approval_question
+* recommended_human_action
+* allowed_actions
+* still_blocked_actions
+* approval_unit_hash
+
+**v0.1 constraint:** Build only. No automatic approval, no payment execution, no deployment execution.
+
+**Pricing:** 0.05 USDC / call
+
+**x402 status:** verify + settle confirmed ✅
+
+**Docs:** https://ai-agent-payment-safety-stack.onrender.com/docs
+
+**CDP Bazaar:** Automatic indexing in progress
+
+---
+
+## Explicit v0.1 Boundaries
+
+What v0.1 is:
+
+* Verification layer
+* Decision preparation layer
+* Audit-ready decision contracts
+
+What v0.1 is NOT:
+
+* Autonomous deployment
+* Autonomous approval execution
+* Human approval execution by this system
+* Blockchain anchoring implementation
+* Payment execution
+* Tool execution
+* Memory write execution
+
+Human approval is always required. This system prepares that decision, it does not execute it.
+
+---
+
+## Governance Pipeline Components
+
+This project defines the governance components that operate before, during, and after human approval.
+
+```
+Agent / Tool Call / Paid API Call / Remediation Proposal
+  ↓
+Agent Budget Guard Interceptor
+  (What is the budget?)
+  ↓
+Budget Guard Manifest
+  (What are the side effects and costs?)
+  ↓
+Source Lineage Tracker
+  (Are claims backed by primary sources?)
+  ↓
+Evidence Coverage Gate
+  (Is there sufficient evidence?)
+  ↓
+Remediation Verification Gate ← LIVE v0.1 API
+  (Is this ready for human approval?)
+  ↓
+Gate Result Router
+  (Route to research, rework, or human review)
+  ↓
+Human Review Bridge
+  (Convert to human-readable review task)
+  ↓
+Approval Unit Builder ← LIVE v0.1 API
+  (Generate human decision contract)
+  ↓
+Human Approval / Rejection / Rework / More Evidence / Escalation
+  ↓
+Audit Log / Agent Memory / Optional Blockchain Anchor
 ```
 
-### Example request (Remediation Verification Gate)
+### Component Roles
+
+* **Agent Budget Guard Interceptor** — Pre-execution budget control for paid or side-effecting actions
+* **Budget Guard Manifest** — Machine-readable metadata for pricing, side effects, and safety profile
+* **Source Lineage Tracker** — Track whether claims are supported by primary sources or only agent-generated outputs
+* **Evidence Coverage Gate** — Verify sufficient source coverage for key claims
+* **Remediation Verification Gate** — Check AI-generated findings, patches, and proposals before human review
+* **Gate Result Router** — Route gate results to research, rework, human review, approval escalation, or execution block
+* **Human Review Bridge** — Convert routed results into human-readable review tasks
+* **Approval Unit Builder** — Generate minimal human decision contracts that define what is allowed, blocked, and escalated
+
+---
+
+## Governance Scenarios
+
+The stack is tested through real governance scenarios.
+
+### Example: Security Patch Approval
+
+See `examples/security_patch_example.json` — SQL injection fix scenario with evidence, test results, rollback available.
+
+See `docs/mockups/human_approval_mock_v1.md` — Visual representation of the approval interface.
+
+**Workflow:**
+```
+1. AI detects SQL injection in user API
+2. AI generates patch candidate
+3. POST /api/remediation/verify
+4. approval_unit_ready = true
+5. POST /api/approval-unit/build
+6. Human Decision Contract generated
+7. Human reviews: patch diff, test results, evidence, rollback plan
+8. Human approves for staging merge only
+9. Production deployment remains blocked
+10. Decision recorded in audit trail
+11. merge_to_staging allowed, deploy_to_production blocked
+```
+
+Other governance scenarios:
+* `examples/dependency_upgrade_example.json` — Fastapi upgrade scenario
+* `examples/staging_only_approval.json` — TLS certificate renewal
+* `examples/rollback_required_example.json` — Database migration
+* `examples/audit_trail_example.json` — Approved decision record
+
+---
+
+## Live API Examples
+
+### Remediation Verification
 
 ```bash
 curl -X POST https://ai-agent-payment-safety-stack.onrender.com/api/remediation/verify \
@@ -76,15 +233,7 @@ curl -X POST https://ai-agent-payment-safety-stack.onrender.com/api/remediation/
   -d @examples/security_patch_example.json
 ```
 
-See `examples/` for complete payloads:
-- `security_patch_example.json` — SQL injection fix scenario
-- `dependency_upgrade_example.json` — fastapi upgrade scenario
-- `staging_only_approval.json` — TLS certificate renewal scenario
-- `rollback_required_example.json` — database migration scenario
-- `audit_trail_example.json` — approved decision record example
-
-### Expected response snippet
-
+**Response snippet:**
 ```json
 {
   "gate_name": "remediation_verification_gate",
@@ -94,12 +243,12 @@ See `examples/` for complete payloads:
   "recommended_human_action": "approve_staging_only",
   "verification_status": "verified",
   "readiness_level": "human_approval_ready",
-  "allowed_next_steps": ["create_approval_unit", "allow_staging_merge_after_approval"],
+  "allowed_next_steps": ["create_approval_unit"],
   "blocked_next_steps": ["deploy_to_production"]
 }
 ```
 
-Then pass to Approval Unit Builder:
+### Approval Unit Builder
 
 ```bash
 curl -X POST https://ai-agent-payment-safety-stack.onrender.com/api/approval-unit/build \
@@ -116,11 +265,21 @@ curl -X POST https://ai-agent-payment-safety-stack.onrender.com/api/approval-uni
   }'
 ```
 
-### Visual mock
+**Response snippet:**
+```json
+{
+  "approval_question": "Approve this security patch for staging merge?",
+  "recommended_human_action": "approve_staging_only",
+  "allowed_actions": ["merge_to_staging"],
+  "still_blocked_actions": ["deploy_to_production"],
+  "approval_unit_hash": "sha256:...",
+  "chain_anchor_status": "not_anchored"
+}
+```
 
-See `docs/mockups/human_approval_mock_v1.md` for a visual representation of the approval interface.
+---
 
-## Why human approval exists
+## Why Human Approval Exists
 
 The system is intentionally designed to keep humans responsible for deployment, financial execution, security escalation, and production-impacting decisions.
 
@@ -128,13 +287,17 @@ v0.1 generates decision contracts only.
 It does not autonomously execute approvals or deployments.
 
 This is a deliberate safety stance:
-- Verification (automatic) → decision preparation
-- Approval (human) → decision confirmation
-- Execution (controlled) → after human approval only
+
+* Verification (automatic) → decision preparation
+* Approval (human) → decision confirmation
+* Execution (controlled) → after human approval only
 
 Production changes, security escalations, and high-risk actions remain under human control.
 
-## Why now
+
+---
+
+## Why Now
 
 CDP Bazaar (May 2026, 48,000+ APIs):
 - market data / search: dominant
@@ -146,9 +309,22 @@ Anthropic announced Claude Managed Agents with self-hosted sandboxes and MCP tun
 This separates agent reasoning from tool execution.
 New boundaries need new checks.
 
-## Agent Pay / Safety Shelf ✅ Quality verified (2026-05-21)
+---
 
-Lightweight safety checks before and after AI agents call external tools, APIs, and payments.
+## Agent Control Primitives — Complete Stack
+
+Lightweight safety, budget, approval, context, and audit primitives that AI agents can use before and after tool calls, API usage, and payments.
+
+### Current v0.1 APIs
+
+| Primitive | When to use | Endpoint | Price |
+|---|---|---|---|
+| Remediation Verification Gate | Verify AI remediation before human approval | POST /api/remediation/verify | included |
+| Approval Unit Builder | Generate human decision contracts | POST /api/approval-unit/build | 0.05 USDC |
+
+### Agent Pay / Safety Shelf
+
+Lightweight checks before and after AI agents call external tools, APIs, and payments.
 
 | Primitive | When to use | Endpoint | Price |
 |---|---|---|---|
@@ -178,303 +354,45 @@ Primitives for deciding what context, past logs, and source-of-truth to check be
 
 See `memory_context_shelf_spec.md` for detailed specifications.
 
-## Remediation Verification Gate API v0.1
-
-Verifies AI-generated remediation candidates before they are routed to human review or Approval Unit Builder.
-
-**Endpoint:** `POST /api/remediation/verify`
-
-**Public URL:** `https://ai-agent-payment-safety-stack.onrender.com/api/remediation/verify`
-
-Use it for:
-- AI-generated security findings
-- patch candidates
-- remediation plans
-- configuration changes
-- dependency updates
-- deployment proposals
-
-Checks:
-- evidence status
-- test results
-- security retest status
-- regression status
-- rollback readiness
-- blast radius
-- production risk
-- approval_unit_ready
-
-v0.1 constraints:
-- rule-based verification only
-- no patch application
-- no deployment
-- no approval execution
-- no payment execution
-- no memory write
-- no tool execution
-- no blockchain transaction
-
-Relationship:
-This API is designed to run before Approval Unit Builder.
-If `approval_unit_ready = true`, the result can be converted into an Approval Unit.
-
-### Live API status
-
-The public Render deployment has been verified.
-
-Endpoint:
-https://ai-agent-payment-safety-stack.onrender.com/api/remediation/verify
-
-Verified behavior:
-- HTTP 200 response
-- decision = "route_to_approval_unit_builder"
-- approval_unit_ready = true
-- recommended_human_action = "approve_staging_only"
-- verification_status = "verified"
-- readiness_level = "human_approval_ready"
-- deploy_to_production remains blocked
-
-v0.1 rule-based verification only. No patch application, deployment, approval execution, or payments.
-
----
-
-## Two-step remediation approval flow
-
-1. Verify remediation candidate
-
-POST /api/remediation/verify
-
-The gate checks evidence, tests, security retest, regression status, rollback readiness, blast radius, and production risk.
-Returns decision and approval_unit_ready flag.
-
-2. Build approval unit
-
-POST /api/approval-unit/build
-
-If approval_unit_ready = true, the result can be converted into a minimal human decision contract.
-
-Flow:
-
-```
-AI-generated patch
-  ↓
-Remediation Verification Gate
-  ↓
-Approval Unit Builder
-  ↓
-Human Approval / Rejection / Rework / More Evidence / Escalation
-```
-
----
-
-## Approval Unit Builder API v0.1
-
-Converts AI-generated findings, patches, payment requests, deployment proposals, memory writes, tool execution requests, or decision-support outputs into minimal human decision contracts.
-
-**Core concept: Approval Unit = Human Decision Contract**
-
-| Endpoint | Description |
-|---|---|
-| `POST /api/approval-unit/build` | Build a minimal human decision contract from an AI-generated output |
-
-**Public URL:** `https://ai-agent-payment-safety-stack.onrender.com/api/approval-unit/build`
-
-v0.1 is build-only:
-- It does not approve, reject, pay, deploy, write, or execute tools.
-- It does not send blockchain transactions.
-- `approval_question` is generated by rule-based templates (not LLM).
-- `approval_unit_hash` is derived from canonical fields for audit stability.
-- Blockchain readiness fields: `chain_anchor_status = not_anchored`.
-
-### Live API status
-
-Approval Unit Builder v0.1 is a live, externally accessible API for converting AI-generated candidates into minimal human decision contracts.
-
-It is intended for:
-
-- AI-generated security findings
-- patch candidates
-- remediation plans
-- x402 / JPYC / USDC payment requests
-- deployment proposals
-- memory write requests
-- high-risk tool execution requests
-- decision-support outputs
-
-**Public endpoint:** https://ai-agent-payment-safety-stack.onrender.com/api/approval-unit/build
-
-**Docs:** https://ai-agent-payment-safety-stack.onrender.com/docs
-
-**Pricing:** 0.05 USDC / call
-
-**x402 status:**
-- Seller Tools: Implementation Looks Correct ✅
-- Payment verification: x402 verify + settle confirmed ✅
-- CDP Bazaar: automatic indexing in progress
-
-v0.1 remains build-only. It does not approve, pay, deploy, write memory, execute tools, or send blockchain transactions.
-
-### Example request
-
-```bash
-curl -X POST https://ai-agent-payment-safety-stack.onrender.com/api/approval-unit/build \
-  -H "Content-Type: application/json" \
-  -d '{
-    "source_type": "security_patch",
-    "approval_unit_type": "security_patch_approval",
-    "title": "Approve patch for SQL injection in user API",
-    "summary": "Replace raw SQL interpolation with parameterized query.",
-    "risk_level": "high",
-    "rollback_available": true,
-    "blocked_actions_until_approval": ["merge_to_staging", "deploy_to_production"]
-  }'
-```
-
-```json
-POST https://ai-agent-payment-safety-stack.onrender.com/api/approval-unit/build
-{
-  "source_type": "security_patch",
-  "approval_unit_type": "security_patch_approval",
-  "title": "Approve patch for SQL injection in user API",
-  "summary": "Replace raw SQL interpolation with parameterized query.",
-  "risk_level": "high",
-  "evidence_ids": ["mythos_finding_001", "codeql_001"],
-  "test_results": ["unit_passed", "integration_passed", "security_retest_passed"],
-  "rollback_available": true,
-  "blocked_actions_until_approval": ["merge_to_staging", "deploy_to_production"],
-  "approver_role": "security_reviewer"
-}
-```
-
-### Example response (abbreviated)
-
-```json
-{
-  "approval_question": "Approve this security patch for staging merge?",
-  "recommended_human_action": "approve_staging_only",
-  "if_approved": {
-    "allowed_actions": ["merge_to_staging"],
-    "still_blocked_actions": ["deploy_to_production"]
-  },
-  "chain_anchor_status": "not_anchored",
-  "approval_unit_hash": "sha256:..."
-}
-```
-
-## Agent Control Primitives Flow
-
-This repository defines planned control primitives for AI agent workflows.
-
-The goal is not only to detect problems.
-The goal is to reduce post-gate operational workload by connecting detection, routing, human review, and audit-ready records.
-
-### Flow
-
-```
-Agent / Tool Call / Paid API Call
-  ↓
-Agent Budget Guard Interceptor
-  ↓
-Budget Guard Manifest
-  ↓
-Source Lineage Tracker
-  ↓
-Evidence Coverage Gate
-  ↓
-Remediation Verification Gate
-  ↓
-Gate Result Router
-  ↓
-Human Review Bridge
-  ↓
-Approval Unit Builder
-  ↓
-Human Approval / Rejection / Rework / More Evidence / Escalation
-  ↓
-Audit Log / Agent Memory / Optional Blockchain Anchor
-```
-
-### Component roles
-
-- **Agent Budget Guard Interceptor**: Checks budget, payment, frequency, and spending policy before paid or side-effecting actions.
-
-- **Budget Guard Manifest**: Provides machine-readable metadata for pricing, side effects, safety profile, and budget guard hints.
-
-- **Source Lineage Tracker**: Tracks whether claims are supported by primary sources or only by agent-generated outputs.
-
-- **Evidence Coverage Gate**: Checks whether AI-generated reports, memos, recommendations, and decision cards have sufficient source coverage.
-
-- **Remediation Verification Gate**: Checks AI-generated findings, patches, remediation plans, configuration changes, dependency updates, and deployment proposals before they are routed to human review or Approval Unit Builder. It verifies test results, security retest status, regression risk, rollback readiness, blast radius, and production risk.
-
-- **Gate Result Router**: Converts gate results into workflow routes such as research, rework, human review, approval escalation, execution block, decision-use block, or log-only audit.
-
-- **Human Review Bridge**: Converts routed gate results into human-readable review tasks for analysts, approvers, developers, auditors, or operators.
-
-- **Approval Unit Builder**: Converts routed review tasks or agent-generated candidates into minimal human decision contracts that define what is being approved, what actions become allowed, what remains blocked, and what human action is suggested next.
-
-### Summary
-
-Gates detect issues.
-The Remediation Verification Gate checks whether AI-generated remediation candidates are ready to become human-reviewable or approval-unit-ready.
-The router decides the next workflow path.
-The bridge turns that path into a human-reviewable task.
-The approval unit builder defines what the human is actually approving and what system actions are allowed or blocked after the decision.
-The stack is designed to reduce manual review load after AI agent actions, paid API calls, or decision-support outputs.
-
-### For AI agents
-
-Use this stack when an AI agent needs to:
-- call paid APIs
-- control x402 or other agent payments
-- verify evidence behind generated reports
-- track source lineage
-- route gate failures
-- reduce human review workload
-- preserve audit-ready workflow records
-- create minimal human approval units
-- suggest human-side actions before approval
-- preserve approval hashes for future audit or blockchain anchoring
-
 ---
 
 ## Planned Design Specs
 
-- Agent Budget Guard Interceptor
+Status of governance layer components:
+
+- **Agent Budget Guard Interceptor** (Planned)
   Pre-execution / pre-payment control layer for x402, MCP, LLM inference, and tool calls.
   Spec: agent_budget_guard_interceptor_spec.md
 
-- Budget Guard Manifest
+- **Budget Guard Manifest** (Planned)
   Machine-readable metadata for pricing, side effects, safety profile, and budget_guard_hints.
   Spec: budget_guard_manifest_spec.md
 
-- Source Lineage Tracker
+- **Source Lineage Tracker** (Planned)
   Tracks primary source lineage for claims to reduce multi-agent error reinforcement.
   Spec: source_lineage_tracker_spec.md
 
-- Evidence Coverage Gate
+- **Evidence Coverage Gate** (Planned)
   Checks whether AI-generated reports, memos, recommendations, and decision cards have sufficient source coverage for key claims.
   Spec: agent_evidence_coverage_gate_spec.md
-  Status: Planned / design spec / not implemented
 
-- Remediation Verification Gate
+- **Remediation Verification Gate** (v0.1 API Available)
   Checks AI-generated remediation candidates before human review or approval unit generation, including test results, security retest, regression risk, rollback readiness, blast radius, and production risk.
   Spec: agent_remediation_verification_gate_spec.md
-  Status: v0.1 API available: POST /api/remediation/verify
+  Endpoint: POST /api/remediation/verify
 
-- Gate Result Router
+- **Gate Result Router** (Planned)
   Routes gate results into workflow paths such as research, rework, human review, approval escalation, execution block, decision-use block, or log-only audit.
   Spec: agent_gate_result_router_spec.md
-  Status: Planned / design spec / not implemented
 
-- Human Review Bridge
+- **Human Review Bridge** (Planned)
   Converts Gate Result Router outputs into human-readable review tasks for analysts, approvers, developers, auditors, or operators.
   Spec: agent_human_review_bridge_spec.md
-  Status: Planned / design spec / not implemented
 
-- Approval Unit Builder
+- **Approval Unit Builder** (v0.1 API Available)
   Converts review tasks, findings, patches, payment requests, deployment proposals, memory writes, tool execution requests, or decision-support outputs into minimal human decision contracts.
   Spec: agent_approval_unit_builder_spec.md
-  Status: v0.1 API available: POST /api/approval-unit/build
+  Endpoint: POST /api/approval-unit/build
 
 ---
 
@@ -482,10 +400,25 @@ Use this stack when an AI agent needs to:
 
 The public Render deployment has been verified.
 
-Base URL: https://ai-agent-payment-safety-stack.onrender.com
-Docs: https://ai-agent-payment-safety-stack.onrender.com/docs
+**Base URL:** https://ai-agent-payment-safety-stack.onrender.com
 
-Verified endpoint: POST /api/approval-unit/build
+**Docs:** https://ai-agent-payment-safety-stack.onrender.com/docs
+
+### Remediation Verification Gate
+
+Endpoint: `POST /api/remediation/verify`
+
+Verified behavior:
+- HTTP 200 response
+- decision = "route_to_approval_unit_builder"
+- approval_unit_ready = true
+- verification_status = "verified"
+- readiness_level = "human_approval_ready"
+- deploy_to_production remains blocked
+
+### Approval Unit Builder
+
+Endpoint: `POST /api/approval-unit/build`
 
 Verified behavior:
 - HTTP 200 response
@@ -501,38 +434,7 @@ Example verified output:
 - if_approved.allowed_actions: ["merge_to_staging"]
 - if_approved.still_blocked_actions: ["deploy_to_production"]
 
-## Deployment
-
-**Public API URL:** https://ai-agent-payment-safety-stack.onrender.com
-
-**API docs:** https://ai-agent-payment-safety-stack.onrender.com/docs
-
-This FastAPI app is deployed on Render.
-
-Start command:
-
-```
-uvicorn main:app --host 0.0.0.0 --port $PORT
-```
-
-After deployment, check:
-
-- GET https://ai-agent-payment-safety-stack.onrender.com/docs
-- POST https://ai-agent-payment-safety-stack.onrender.com/api/approval-unit/build
-- GET https://ai-agent-payment-safety-stack.onrender.com/openapi.json
-
-v0.1 constraints remain the same:
-- no approval execution
-- no payment execution
-- no deployment execution
-- no memory write execution
-- no tool execution
-- no blockchain transaction
-
 ---
-
-**All public APIs indexed in CDP Bazaar:**
-Discovery: https://api.cdp.coinbase.com/platform/v2/x402/discovery/merchant?payTo=0x60c402878EfcEcAe5733A88075328Aa2320C39BE
 
 ## Use Case: Circle App Kits + Agent Safety Checks
 
@@ -540,10 +442,15 @@ Circle App Kits makes onchain actions easy: bridge, send, swap, balance.
 Agent Safety Checks can be used before these actions to verify intent, amount, recipient, identity, and quota.
 
 Example flow:
+```
 AI agent decides to bridge USDC
-→ dry-run-validate checks amount, chain, recipient, intent, identity, and quota
-→ allow / block / requires_review
-→ app calls kit.bridge()
+  ↓
+dry-run-validate checks amount, chain, recipient, intent, identity, and quota
+  ↓
+allow / block / requires_review
+  ↓
+app calls kit.bridge()
+```
 
 Example request:
 ```json
@@ -564,6 +471,8 @@ POST /api/tool/dry-run-validate
 Note: Agent Safety Checks is not affiliated with Circle.
 This describes a compatible safety-check pattern for onchain SDK actions.
 
+---
+
 ## Seven Integrity Layers for AI Agents
 
 | Layer | Question | What it controls |
@@ -576,6 +485,8 @@ This describes a compatible safety-check pattern for onchain SDK actions.
 | Context Integrity | Is this within scope? | task scope, legal/policy boundaries, use case limits |
 | Kill Switch Integrity | How can it be stopped? | emergency stop, deactivation, human override |
 
+---
+
 ## Planned Primitive Packs
 
 | Pack | Planned primitives |
@@ -586,6 +497,8 @@ This describes a compatible safety-check pattern for onchain SDK actions.
 | Agent Update Integrity Pack | Skill Regression Checker, Update Conflict Checker, Forgetting Risk Estimator, GEPA Candidate Gate, Prompt Policy Regression Checker |
 | CI/CD Boundary Pack | GitHub Actions Permission Auditor, Token Scope Validator, Package Publish Gate, Secret Exposure Checker |
 
+---
+
 ## Recommended First Call
 
 Start with agent-security-gateway.
@@ -593,7 +506,7 @@ Start with agent-security-gateway.
 Before an AI agent calls a tool, stores memory, or makes a paid API request,
 scan the input first.
 
-POST https://agent-security-gateway.onrender.com/api/security/scan
+**POST** `https://ai-agent-payment-safety-stack.onrender.com/api/security/scan`
 
 ### Example request
 ```json
@@ -614,44 +527,62 @@ POST https://agent-security-gateway.onrender.com/api/security/scan
 }
 ```
 
-## Machine-readable guidance
+---
+
+## Machine-readable Guidance
 
 Each current primitive includes:
-- llms.txt — explains when an AI agent should call this API
-- skill.md — explains inputs, outputs, and related primitives
+- `llms.txt` — explains when an AI agent should call this API
+- `skill.md` — explains inputs, outputs, and related primitives
+
+---
 
 ## Primitive Catalog
 
-See primitives_catalog.md for the full list of current and planned primitives.
+See `primitives_catalog.md` for the full list of current and planned primitives.
+
+---
 
 ## Payment Safety Stack
 
 ```
 Prompt / Request
-→ Security Check (agent-security-gateway)
-→ Budget Check (agent-budget-guard)
-→ Payment Approval
-→ Execution
-→ Audit Log (agent-memory-api)
-→ Memory / Decision Record (agent-evolution-engine)
+  ↓
+Security Check (agent-security-gateway)
+  ↓
+Budget Check (agent-budget-guard)
+  ↓
+Payment Approval
+  ↓
+Execution
+  ↓
+Audit Log (agent-memory-api)
+  ↓
+Memory / Decision Record (agent-evolution-engine)
 ```
+
+---
 
 ## Use Cases
 
-- AI agents paying APIs via x402
-- Logistics agents receiving USDC per execution
-- Machine wallets buying electricity or compute with nanopayments
+* AI agents paying APIs via x402
+* Logistics agents receiving USDC per execution
+* Machine wallets buying electricity or compute with nanopayments
 
 日本語：
-- x402経由でAPIに支払うAIエージェント
-- 実行ごとにUSDC報酬を受け取る物流エージェント
-- 電力や計算資源を少額決済で購入する機械ウォレット
+* x402経由でAPIに支払うAIエージェント
+* 実行ごとにUSDC報酬を受け取る物流エージェント
+* 電力や計算資源を少額決済で購入する機械ウォレット
+
+---
 
 ## Related Control Problem
 
 The same control problem appears in AI security agents:
 finding, triaging, patching, and auditing actions at scale.
 Budget limits, approval flows, and audit logs apply there too.
+
+---
 
 ## JPYC / Domestic Stablecoin Ready
 
@@ -669,6 +600,44 @@ after payment, and for audit records.
 
 Not affiliated with JPYC Inc., LINE, or Unifi.
 These primitives are designed to work with any x402 or stablecoin payment flow.
+
+---
+
+## Deployment
+
+**Public API URL:** https://ai-agent-payment-safety-stack.onrender.com
+
+**API docs:** https://ai-agent-payment-safety-stack.onrender.com/docs
+
+This FastAPI app is deployed on Render.
+
+Start command:
+
+```
+uvicorn main:app --host 0.0.0.0 --port $PORT
+```
+
+After deployment, check:
+
+* GET https://ai-agent-payment-safety-stack.onrender.com/docs
+* POST https://ai-agent-payment-safety-stack.onrender.com/api/remediation/verify
+* POST https://ai-agent-payment-safety-stack.onrender.com/api/approval-unit/build
+* GET https://ai-agent-payment-safety-stack.onrender.com/openapi.json
+
+v0.1 constraints:
+* no approval execution
+* no payment execution
+* no deployment execution
+* no memory write execution
+* no tool execution
+* no blockchain transaction
+
+---
+
+**All public APIs indexed in CDP Bazaar:**
+https://api.cdp.coinbase.com/platform/v2/x402/discovery/merchant?payTo=0x60c402878EfcEcAe5733A88075328Aa2320C39BE
+
+---
 
 ## What We Are Not
 
