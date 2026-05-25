@@ -956,22 +956,35 @@ async def health():
 
 @app.get("/.well-known/x402", include_in_schema=False)
 async def x402_discovery_manifest():
+    base_url = "https://ai-agent-payment-safety-stack.onrender.com"
+    amount = str(round(0.05 * 1_000_000))  # 50000 USDC atomic units
     return {
         "version": 1,
         "name": "Agent Approval Unit Builder",
-        "title": "Agent Approval Unit Builder",
         "description": (
             "Build minimal human decision contracts from AI-generated findings, patches, "
             "payment requests, deployment proposals, memory writes, tool execution requests, "
             "or decision-support outputs. Approval Unit = Human Decision Contract."
         ),
         "tags": ["AI", "Approval", "Governance"],
-        "resources": [
-            "https://ai-agent-payment-safety-stack.onrender.com/api/approval-unit/build",
-        ],
         "ownershipProofs": [WALLET_ADDRESS],
-        "instructions": (
-            "Call POST /api/approval-unit/build with x402 payment (0.05 USDC) "
-            "to build an Approval Unit."
-        ),
+        "resources": [
+            {
+                "x402Version": 2,
+                "type": "http",
+                "resource": f"{base_url}/api/approval-unit/build",
+                "accepts": [
+                    {
+                        "scheme": "exact",
+                        "network": "eip155:8453",
+                        "amount": amount,
+                        "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                        "payTo": WALLET_ADDRESS,
+                        "maxTimeoutSeconds": 300,
+                        "extra": {"name": "USD Coin", "version": "2"},
+                    }
+                ],
+                "extensions": _BAZAAR_EXTENSIONS,
+            }
+        ],
     }
