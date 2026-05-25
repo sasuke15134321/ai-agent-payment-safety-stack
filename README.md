@@ -57,6 +57,83 @@ Human Decision Contract
 * human-in-the-loop AI operations
 * audit-ready AI decision workflows
 
+## End-to-end examples
+
+Example flow:
+
+```text
+1. POST /api/remediation/verify
+2. approval_unit_ready = true
+3. POST /api/approval-unit/build
+4. Human Decision Contract generated
+```
+
+### Example request (Remediation Verification Gate)
+
+```bash
+curl -X POST https://ai-agent-payment-safety-stack.onrender.com/api/remediation/verify \
+  -H "Content-Type: application/json" \
+  -d @examples/security_patch_example.json
+```
+
+See `examples/` for complete payloads:
+- `security_patch_example.json` — SQL injection fix scenario
+- `dependency_upgrade_example.json` — fastapi upgrade scenario
+- `staging_only_approval.json` — TLS certificate renewal scenario
+- `rollback_required_example.json` — database migration scenario
+- `audit_trail_example.json` — approved decision record example
+
+### Expected response snippet
+
+```json
+{
+  "gate_name": "remediation_verification_gate",
+  "remediation_id": "remediation_sec_001",
+  "decision": "route_to_approval_unit_builder",
+  "approval_unit_ready": true,
+  "recommended_human_action": "approve_staging_only",
+  "verification_status": "verified",
+  "readiness_level": "human_approval_ready",
+  "allowed_next_steps": ["create_approval_unit", "allow_staging_merge_after_approval"],
+  "blocked_next_steps": ["deploy_to_production"]
+}
+```
+
+Then pass to Approval Unit Builder:
+
+```bash
+curl -X POST https://ai-agent-payment-safety-stack.onrender.com/api/approval-unit/build \
+  -H "Content-Type: application/json" \
+  -d '{
+    "source_type": "security_patch",
+    "approval_unit_type": "security_patch_approval",
+    "title": "SQL injection fix for user API",
+    "summary": "Replace raw SQL interpolation with parameterized query",
+    "risk_level": "high",
+    "evidence_ids": ["finding_001", "codeql_001"],
+    "test_results": ["unit_passed", "integration_passed"],
+    "rollback_available": true
+  }'
+```
+
+### Visual mock
+
+See `docs/mockups/human_approval_mock_v1.md` for a visual representation of the approval interface.
+
+## Why human approval exists
+
+The system is intentionally designed to keep humans responsible for deployment, financial execution, security escalation, and production-impacting decisions.
+
+v0.1 generates decision contracts only.
+It does not autonomously execute approvals or deployments.
+
+This is a deliberate safety stance:
+- Verification (automatic) → decision preparation
+- Approval (human) → decision confirmation
+- Execution (controlled) → after human approval only
+
+Production changes, security escalations, and high-risk actions remain under human control.
+
 ## Why now
 
 CDP Bazaar (May 2026, 48,000+ APIs):

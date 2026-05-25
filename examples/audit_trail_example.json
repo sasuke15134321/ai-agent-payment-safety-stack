@@ -1,0 +1,31 @@
+{
+  "audit_id": "audit_001",
+  "approval_unit_id": "approval_001",
+  "approval_unit_hash": "sha256:abc123def456ghi789jkl012mno345pqr678stu901vwx234yz",
+  "remediation_id": "remediation_sec_001",
+  "decision": "approve_staging_only",
+  "verification_status": "verified",
+  "readiness_level": "human_approval_ready",
+  "approved_by": "security_lead",
+  "approved_at": "2026-05-25T14:30:00+00:00",
+  "approval_timestamp_utc": "2026-05-25T14:30:00Z",
+  "allowed_actions": [
+    "merge_to_staging",
+    "run_staging_integration_tests"
+  ],
+  "still_blocked_actions": [
+    "deploy_to_production",
+    "release_to_customers"
+  ],
+  "evidence_status": "sufficient",
+  "test_status": "passed",
+  "security_retest_status": "passed",
+  "regression_status": "passed",
+  "rollback_status": "available",
+  "production_risk": "not_requested",
+  "human_action_reason": "All checks passed. Ready for human approval at staging level.",
+  "audit_notes": "Security patch for SQL injection approved for staging merge. Production deployment remains blocked pending additional human review and security lead sign-off.",
+  "approval_visibility": "audit_required",
+  "blockchain_anchor_ready": true,
+  "next_step": "execute_approved_actions"
+}
