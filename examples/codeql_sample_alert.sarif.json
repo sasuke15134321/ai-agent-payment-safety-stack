@@ -1,0 +1,189 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "CodeQL",
+          "version": "2.14.6",
+          "informationUri": "https://codeql.github.com",
+          "rules": [
+            {
+              "id": "py/sql-injection",
+              "name": "SQL injection vulnerability",
+              "shortDescription": {
+                "text": "SQL query is not sanitized"
+              },
+              "fullDescription": {
+                "text": "Constructing a SQL query by concatenating user input can lead to SQL injection attacks. Use parameterized queries instead."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "properties": {
+                "precision": "high",
+                "security-severity": "9.0",
+                "tags": [
+                  "security",
+                  "sql-injection",
+                  "owasp/a03:2021-injection"
+                ]
+              },
+              "helpUri": "https://codeql.github.com/codeql-query-help/python/py-sql-injection/",
+              "relationships": [
+                {
+                  "target": {
+                    "id": "CWE/89",
+                    "index": 0,
+                    "toolComponent": {
+                      "name": "CWE"
+                    }
+                  },
+                  "kinds": ["superset"]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "py/sql-injection",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "This SQL query is constructed by string interpolation including a non-constant value. This makes the code vulnerable to SQL injection attacks.",
+            "id": "msg1"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "app/models/user.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 42,
+                  "startColumn": 5,
+                  "endLine": 42,
+                  "endColumn": 85
+                }
+              },
+              "logicalLocations": [
+                {
+                  "name": "get_user_by_id",
+                  "fullyQualifiedName": "app.models.user.get_user_by_id"
+                }
+              ]
+            }
+          ],
+          "relatedLocations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "app/models/user.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 42,
+                  "snippet": {
+                    "text": "query = f\"SELECT * FROM users WHERE user_id = '{user_input}'\""
+                  }
+                }
+              },
+              "message": {
+                "text": "user_input is a user-controlled variable"
+              }
+            }
+          ],
+          "codeFlows": [
+            {
+              "threadFlows": [
+                {
+                  "locations": [
+                    {
+                      "location": {
+                        "physicalLocation": {
+                          "artifactLocation": {
+                            "uri": "app/models/user.py"
+                          },
+                          "region": {
+                            "startLine": 40,
+                            "snippet": {
+                              "text": "def get_user_by_id(user_input):"
+                            }
+                          }
+                        },
+                        "message": {
+                          "text": "user_input parameter"
+                        }
+                      }
+                    },
+                    {
+                      "location": {
+                        "physicalLocation": {
+                          "artifactLocation": {
+                            "uri": "app/models/user.py"
+                          },
+                          "region": {
+                            "startLine": 42,
+                            "snippet": {
+                              "text": "query = f\"SELECT * FROM users WHERE user_id = '{user_input}'\""
+                            }
+                          }
+                        },
+                        "message": {
+                          "text": "used in SQL query without sanitization"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "fixes": [
+            {
+              "description": {
+                "text": "Use a parameterized query to prevent SQL injection"
+              },
+              "artifactChanges": [
+                {
+                  "artifactLocation": {
+                    "uri": "app/models/user.py"
+                  },
+                  "replacements": [
+                    {
+                      "deletedRegion": {
+                        "startLine": 42,
+                        "startColumn": 5,
+                        "endLine": 42,
+                        "endColumn": 85
+                      },
+                      "insertedContent": {
+                        "text": "query = \"SELECT * FROM users WHERE user_id = ?\"; cursor.execute(query, (user_input,))"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "fingerprints": {
+            "identity/v1": "67891234567890abcdef0123456789abcdef0123"
+          },
+          "partialFingerprints": {
+            "primaryLocationLineHash": "abcd1234efgh5678ijkl9012"
+          }
+        }
+      ],
+      "properties": {
+        "analysisTool": "GitHub Advanced Security",
+        "scanDate": "2026-05-26T07:03:18Z",
+        "branch": "main",
+        "repository": "https://github.com/example/repo"
+      }
+    }
+  ]
+}
