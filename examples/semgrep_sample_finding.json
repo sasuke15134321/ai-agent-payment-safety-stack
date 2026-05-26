@@ -1,0 +1,47 @@
+{
+  "check_id": "python.lang.security.injection.sql.sql-injection-autoescaping",
+  "path": "app/models/user.py",
+  "start": {
+    "line": 42,
+    "column": 5
+  },
+  "end": {
+    "line": 42,
+    "column": 85
+  },
+  "message": "Detected a SQL injection vulnerability. User input is directly interpolated into a SQL query without parameterization. This can allow an attacker to inject arbitrary SQL code.",
+  "languages": ["python"],
+  "severity": "ERROR",
+  "confidence": "HIGH",
+  "rule_id": "B608",
+  "matched_text": "SELECT * FROM users WHERE user_id = '{user_input}'",
+  "fix": "SELECT * FROM users WHERE user_id = %s",
+  "fix_applied": false,
+  "remediation_plan": {
+    "type": "parameterized_query",
+    "description": "Replace string interpolation with parameterized query to prevent SQL injection",
+    "steps": [
+      "Replace f-string or .format() with %s placeholder",
+      "Pass user_input as a tuple to cursor.execute()",
+      "Verify that the prepared statement correctly binds the parameter"
+    ],
+    "patch_candidate": "db.execute('SELECT * FROM users WHERE user_id = %s', (user_input,))",
+    "risk_level": "low",
+    "testing_required": true
+  },
+  "context": {
+    "function_name": "get_user_by_id",
+    "file_content": "def get_user_by_id(user_input):\n    query = f\"SELECT * FROM users WHERE user_id = '{user_input}'\"\n    cursor.execute(query)\n    return cursor.fetchone()",
+    "affected_lines": [40, 41, 42, 43]
+  },
+  "cve_references": ["CVE-2019-9193"],
+  "owasp_references": ["A1:2021 - Broken Access Control", "A03:2021 - Injection"],
+  "metadata": {
+    "timestamp": "2026-05-25T10:30:00Z",
+    "semgrep_version": "1.65.0",
+    "scan_id": "scan_20260525_001",
+    "repository": "example-app",
+    "branch": "main",
+    "commit_hash": "abc123def456"
+  }
+}
