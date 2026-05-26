@@ -3,6 +3,8 @@
 AI agents can generate patches, deployments, and payment requests.
 This project defines the human governance layer that controls what AI systems are actually allowed to execute.
 
+For teams building AI agents that can deploy code, spend money, call tools, or modify infrastructure.
+
 ```
 AI-generated action
         ↓
@@ -18,12 +20,37 @@ Controlled execution
 **CI success ≠ production authorization**
 **Approval ≠ unrestricted execution**
 
+## Start Here
+
+If you are new to this project:
+
+1. [Governance Quickstart](docs/governance_quickstart.md)
+2. [Security Patch Walkthrough](docs/walkthroughs/security_patch_walkthrough.md)
+3. [Financial Approval Walkthrough](docs/walkthroughs/financial_approval_walkthrough.md)
+4. [Production Deploy Escalation](docs/walkthroughs/production_deploy_escalation.md)
+
 ## Live APIs
 
 | API | Purpose | Endpoint |
 |---|---|---|
 | Remediation Verification Gate | Verify AI-generated fixes before human approval | POST /api/remediation/verify |
 | Approval Unit Builder | Generate human decision contracts | POST /api/approval-unit/build |
+
+## Current Status
+
+### Live APIs
+- Remediation Verification Gate — POST /api/remediation/verify
+- Approval Unit Builder — POST /api/approval-unit/build (0.05 USDC)
+
+### Governance Specifications (not yet implemented)
+- Agent Budget Guard Interceptor
+- Budget Guard Manifest
+- Source Lineage Tracker
+- Evidence Coverage Gate
+- Gate Result Router
+- Human Review Bridge
+- Decision Scope Policy
+- Governance Runtime Architecture
 
 ## 30-second example
 
