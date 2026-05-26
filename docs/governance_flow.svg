@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="480" height="520" xmlns="http://www.w3.org/2000/svg" font-family="monospace" font-size="13">
+  <!-- Background -->
+  <rect width="480" height="520" fill="#0d1117" rx="12"/>
+
+  <!-- Title -->
+  <text x="240" y="36" text-anchor="middle" fill="#e6edf3" font-size="15" font-weight="bold">AI Agent Governance Flow</text>
+
+  <!-- Boxes -->
+  <!-- AI Action -->
+  <rect x="140" y="56" width="200" height="36" rx="6" fill="#21262d" stroke="#30363d"/>
+  <text x="240" y="79" text-anchor="middle" fill="#79c0ff">AI-generated action</text>
+
+  <!-- Arrow -->
+  <line x1="240" y1="92" x2="240" y2="112" stroke="#30363d" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Verification -->
+  <rect x="100" y="112" width="280" height="36" rx="6" fill="#21262d" stroke="#f78166"/>
+  <text x="240" y="135" text-anchor="middle" fill="#f78166">Remediation Verification Gate</text>
+
+  <!-- Arrow -->
+  <line x1="240" y1="148" x2="240" y2="168" stroke="#30363d" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Decision Contract -->
+  <rect x="100" y="168" width="280" height="36" rx="6" fill="#21262d" stroke="#3fb950"/>
+  <text x="240" y="191" text-anchor="middle" fill="#3fb950">Approval Unit Builder</text>
+
+  <!-- Arrow -->
+  <line x1="240" y1="204" x2="240" y2="224" stroke="#30363d" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Human Decision -->
+  <rect x="100" y="224" width="280" height="36" rx="6" fill="#21262d" stroke="#d2a8ff"/>
+  <text x="240" y="247" text-anchor="middle" fill="#d2a8ff">Human Decision Contract</text>
+
+  <!-- Arrow -->
+  <line x1="240" y1="260" x2="240" y2="280" stroke="#30363d" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Scoped Approval -->
+  <rect x="100" y="280" width="280" height="36" rx="6" fill="#21262d" stroke="#e3b341"/>
+  <text x="240" y="303" text-anchor="middle" fill="#e3b341">Scoped Human Approval</text>
+
+  <!-- Arrow -->
+  <line x1="240" y1="316" x2="240" y2="336" stroke="#30363d" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Controlled Execution -->
+  <rect x="100" y="336" width="280" height="36" rx="6" fill="#21262d" stroke="#3fb950"/>
+  <text x="240" y="359" text-anchor="middle" fill="#3fb950">Controlled Execution</text>
+
+  <!-- Divider -->
+  <line x1="60" y1="392" x2="420" y2="392" stroke="#30363d" stroke-width="1"/>
+
+  <!-- Key principles -->
+  <text x="240" y="416" text-anchor="middle" fill="#8b949e" font-size="12">CI success ≠ production authorization</text>
+  <text x="240" y="438" text-anchor="middle" fill="#8b949e" font-size="12">Approval ≠ unrestricted execution</text>
+  <text x="240" y="460" text-anchor="middle" fill="#8b949e" font-size="12">Human approval always required</text>
+
+  <!-- Arrow marker -->
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#30363d"/>
+    </marker>
+  </defs>
+</svg>
