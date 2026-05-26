@@ -1,6 +1,42 @@
-# AI Operational Governance Layer
+# AI Agent Payment Safety Stack
 
-Control verification, decision preparation, and scoped execution for AI agent actions.
+AI agents can generate patches, deployments, and payment requests.
+This project defines the human governance layer that controls what AI systems are actually allowed to execute.
+
+```
+AI-generated action
+        ↓
+Verification
+        ↓
+Human Decision Contract
+        ↓
+Scoped approval
+        ↓
+Controlled execution
+```
+
+**CI success ≠ production authorization**
+**Approval ≠ unrestricted execution**
+
+## Live APIs
+
+| API | Purpose | Endpoint |
+|---|---|---|
+| Remediation Verification Gate | Verify AI-generated fixes before human approval | POST /api/remediation/verify |
+| Approval Unit Builder | Generate human decision contracts | POST /api/approval-unit/build |
+
+## 30-second example
+
+AI generated a security patch.
+Human approves staging merge only.
+Production deployment remains blocked.
+
+```json
+{
+  "allowed_actions": ["merge_to_staging"],
+  "still_blocked_actions": ["deploy_to_production"]
+}
+```
 
 ---
 
