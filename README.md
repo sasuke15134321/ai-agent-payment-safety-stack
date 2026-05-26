@@ -17,6 +17,8 @@ Scoped approval
 Controlled execution
 ```
 
+![Governance Flow](docs/governance_flow.svg)
+
 **CI success ≠ production authorization**
 
 **Approval ≠ unrestricted execution**
@@ -29,6 +31,8 @@ If you are new to this project:
 2. [Security Patch Walkthrough](docs/walkthroughs/security_patch_walkthrough.md)
 3. [Financial Approval Walkthrough](docs/walkthroughs/financial_approval_walkthrough.md)
 4. [Production Deploy Escalation](docs/walkthroughs/production_deploy_escalation.md)
+5. [Governance FAQ](docs/governance_faq.md)
+6. [All Examples Index](docs/governance_examples_index.md)
 
 ## Live APIs
 
