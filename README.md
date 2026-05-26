@@ -4,6 +4,12 @@ Control verification, decision preparation, and scoped execution for AI agent ac
 
 ---
 
+## Quick Start
+
+New here? Start with the [Governance Quickstart](docs/governance_quickstart.md) to understand this project in 5 minutes.
+
+---
+
 ## Why this exists
 
 AI agents can already:
