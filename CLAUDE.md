@@ -29,3 +29,9 @@ Core concept: **Approval Unit = Human Decision Contract**
 - FastAPI
 - Pydantic
 - x402 payment infrastructure (Coinbase Commerce)
+
+## Design Specs (13 confirmed)
+
+**Updated 2026-05-27**: agent_decision_provenance_spec.md (2026-05-27 revision) is part of the 13 confirmed design specs.
+
+Core principle: Decision ≠ provenance (plausibility is not traceability).

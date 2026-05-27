@@ -503,6 +503,11 @@ Status of governance layer components:
   Spec: agent_approval_unit_builder_spec.md
   Endpoint: POST /api/approval-unit/build
 
+- **Agent Decision Provenance** (Confirmed Design Spec, 2026-05-27 revision)
+  Verifies whether AI agent decisions are grounded in traceable evidence, memory, and policy.
+  Ensures Decision ≠ provenance: plausibility is not traceability.
+  Spec: agent_decision_provenance_spec.md
+
 ---
 
 ## Live API Status
