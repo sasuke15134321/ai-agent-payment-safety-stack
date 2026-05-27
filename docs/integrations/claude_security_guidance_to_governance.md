@@ -1,276 +1,126 @@
-# Claude Security Guidance → Governance Flow Integration
+# Claude Security Guidance → AI Agent Governance Flow Integration
 
-## Overview
+## 1. Purpose
 
-Claude Code's security-guidance plugin detects security risks while code is being written. AI Agent Payment Safety Stack governs what may be approved, staged, executed, or kept blocked after that finding.
+Claude security-guidance plugin provides security findings and remediation hints for code vulnerabilities.
 
-This document describes how security findings flow from Claude into governance decision-making, and why human judgment remains required at every step.
+However, **a finding is not an execution authorization.**
+
+This document defines how security findings from Claude security-guidance are integrated into the AI Agent Payment Safety Stack governance flow to ensure that:
+- Findings remain evidence, not approval
+- Remediation suggestions remain hints, not authorized patches
+- Security validation remains separate from deployment authorization
+- Human approval is always required and scoped
+
+**Core Principles (必ず明記)**:
+- finding ≠ deployment authorization
+- remediation hint ≠ approved patch
+- CI success ≠ production authorization
+- Approval ≠ unrestricted execution
+- Production remains blocked until separately authorized
 
 ---
 
-## 1. What Claude Code security-guidance Does
+## 2. Non-goals
 
-Claude Code's security-guidance plugin operates at write-time:
-
-* Detects security issues, vulnerabilities, and anti-patterns as code is being modified
-* Issues security finding, warning, or remediation hint
-* Provides context about the issue and suggested fixes
-* Flags suspicious patterns before deployment
-
-**Critical clarity**: A security finding is not production deployment authorization.
-
----
-
-## 2. Why Governance Is Still Required
-
-Three essential principles:
-
-**Security guidance finding ≠ deployment authorization**
-
-The fact that a security issue was detected and fixed does not mean the code is approved for production. Finding a problem and solving it are different from authorizing execution.
-
-**Security warning resolved ≠ production approval**
-
-Resolving a security warning in Claude Code means the code no longer triggers the warning. It does not mean:
-- The fix is correct
-- The fix is tested
-- The fix should execute in production
-- The fix is approved by any authority
-
-**Code edit accepted ≠ unrestricted execution**
-
-Accepting a code edit into a branch means the code is syntactically valid and the security warning was addressed. It does not grant permission for:
-- Staging deployment
-- Production deployment
-- API execution
-- Payment execution
-- Database modification
+This document does NOT:
+- Re-implement the Claude security-guidance plugin
+- Replace or duplicate security scanning tools
+- Authorize automatic production deployment
+- Treat findings as approval by default
+- Implement the governance runtime engine
+- Execute security patches autonomously
 
 ---
 
 ## 3. Integration Flow
 
 ```
-Claude Code security-guidance
+Claude security-guidance plugin
 ↓
 Security finding / remediation hint
 ↓
 Remediation Verification Gate
 ↓
+Verification result
+↓
 Approval Unit Builder
 ↓
 Human Decision Contract
 ↓
-Scoped approval (staging only)
+Scoped human approval
 ↓
-Controlled execution / production remains blocked
+Allowed action only
+↓
+Production remains blocked unless separately authorized
 ```
 
-The flow ensures that:
-1. Security findings are detected at edit-time
-2. Remediation is verified (not just proposed)
-3. Human approval authority creates a decision contract
-4. Execution is scoped to the approved boundaries only
-5. Production execution remains blocked unless explicitly approved
+**Critical boundaries**:
+- Security check success ≠ staging approval
+- Staging approval ≠ production approval
+- Approval Unit ≠ unrestricted execution
+- Finding validation ≠ patch authorization
 
 ---
 
-## 4. Example Mapping: Claude Finding to RVG Input
+## 4. Governance Boundary
 
-When Claude security-guidance detects an issue and a fix is applied, that information flows into Remediation Verification Gate as follows:
+security check success ≠ deployment authorization
 
-```json
-{
-  "source_type": "claude_security_guidance",
-  "remediation_type": "patch_candidate",
-  "title": "SQL Injection Prevention in User Query",
-  "finding_summary": "Detected parameterized query pattern violation in user_api.go. User input was concatenated directly into SQL query.",
-  "remediation_summary": "Applied prepared statement pattern. User input now passed as query parameter, not concatenated.",
-  "severity": "high",
-  "evidence_ids": [
-    "claude_finding_2026_05_26_10_00_sql_injection"
-  ],
-  "source_ids": [
-    "file:user_api.go:line_142_158"
-  ],
-  "test_results": {
-    "status": "passed",
-    "tests_run": 12,
-    "tests_failed": 0,
-    "affected_test_suite": "user_query_tests"
-  },
-  "security_retest_results": {
-    "status": "passed",
-    "claude_recheck": "Pattern now matches parameterized query best practice",
-    "additional_checks": "No new security warnings detected"
-  },
-  "rollback_available": true,
-  "production_deploy_requested": false
-}
-```
+Production deployment requires separate approval scope and execution ticket.
 
 ---
 
-## 5. Remediation Verification Gate Response
+## 5. Example Scenario
 
-When RVG processes the Claude finding:
-
-```json
-{
-  "verification_id": "rvg_20260526_001",
-  "source_input": {
-    "source_type": "claude_security_guidance",
-    "finding_id": "claude_finding_2026_05_26_10_00_sql_injection"
-  },
-  "decision": "route_to_approval_unit_builder",
-  "approval_unit_ready": true,
-  "approval_unit_hash": "sha256:a1b2c3d4e5f6...",
-  "recommended_human_action": "approve_staging_only",
-  "blocked_next_steps": [
-    "deploy_to_production",
-    "payment_execution",
-    "immediate_rollout"
-  ],
-  "verification_status": "verified",
-  "verification_details": {
-    "claude_finding_valid": true,
-    "remediation_pattern_sound": true,
-    "test_coverage_sufficient": true,
-    "risk_level": "medium_after_remediation"
-  }
-}
-```
-
-Key point: **Verification ≠ Execution**. RVG verified that the finding and fix are sound. It did not approve execution.
+SQL injection risk の例：
+- approval_question: Approve this security patch for staging merge?
+- recommended_human_action: approve_staging_only
+- allowed_actions: merge_to_staging
+- still_blocked_actions: deploy_to_production
 
 ---
 
-## 6. Approval Unit Builder Response
+## 6. Relation to Existing Specs
 
-AUB then converts the verified remediation into a human decision contract:
-
-```json
-{
-  "approval_unit_id": "approval_unit_26052601",
-  "approval_unit_hash": "sha256:a1b2c3d4e5f6...",
-  "approval_question": "May this SQL injection remediation be merged to staging and tested in staging environment before production consideration?",
-  "recommended_human_action": "approve_staging_only",
-  "allowed_actions": [
-    "merge_to_staging",
-    "run_staging_tests",
-    "monitor_staging_behavior"
-  ],
-  "still_blocked_actions": [
-    "deploy_to_production",
-    "release_to_live_traffic",
-    "approve_production_deploy",
-    "modify_firewall_rules",
-    "execute_payment"
-  ],
-  "approval_unit_scope": {
-    "repository": "user-api",
-    "branch": "security/sql_injection_fix",
-    "environment_allowed": "staging",
-    "environment_blocked": "production"
-  },
-  "approval_duration": "7_days",
-  "expiry_at": "2026-06-02T10:00:00Z",
-  "human_signer": "security_lead@company",
-  "signed_at": "2026-05-26T10:15:00Z"
-}
-```
+- agent_remediation_verification_gate_spec.md
+- agent_approval_unit_builder_spec.md
+- agent_decision_scope_policy_spec.md
+- agent_execution_ticket_spec.md
+- agent_governance_runtime_architecture_spec.md
+- agent_operational_degradation_guard_spec.md
 
 ---
 
-## 7. What Humans Are Actually Approving
+## 7. Operational Degradation Note
 
-The human approval decision is **scoped, temporary, and bounded**.
-
-**The human is NOT approving**:
-- Unrestricted code execution
-- Automatic production deployment
-- Removal of safeguards
-- Skipping validation steps
-- Bypassing audit requirements
-
-**The human IS approving**:
-- Merging the staging branch
-- Running tests in staging
-- Monitoring staging behavior
-- Escalating to production review later (if staging passes)
-
-**Allowed actions**:
-* merge_to_staging
-* run_staging_tests
-* monitor_staging_behavior
-
-**Still blocked**:
-* deploy_to_production
-* release_to_live_traffic
-* approve_production_deploy
-* execute_payment
-
-The boundary is explicit. Production deployment requires a separate decision.
+AI Agent は security finding 確認後、確認を省略して patch / deploy に進む可能性がある。
+これは hallucination ではなく operational degradation として扱う。
 
 ---
 
-## 8. v0.1 Boundaries
+## 8. Status
 
-This integration is specification only. Important constraints:
+This is an integration design document.
+Runtime integration has not yet been implemented.
 
-* **no autonomous deployment** — All deployment decisions remain human-controlled
-* **no automatic production deployment** — Staging approval does not trigger production deployment
-* **no automatic approval execution** — Approvals do not self-execute
-* **no payment execution** — Security findings do not authorize payment transfers
-* **no blockchain transaction** — Findings do not trigger ledger writes
-* **human approval required** — Every escalation point requires human decision
+Current status:
+- Claude security-guidance plugin: external security guidance source
+- Remediation Verification Gate API: live
+- Approval Unit Builder API: live
+- Execution Ticket: specified
+- Production authorization: separately required
 
-Verification ≠ Approval ≠ Execution.
-
----
-
-## 9. Relationship to Existing Integrations
-
-This integration sits alongside:
-
-**Semgrep integration** (`semgrep_to_governance.md`)
-- Semgrep YAML rules → Remediation Verification Gate
-- Static analysis findings flow into governance
-
-**CodeQL / SARIF integration** (`codeql_to_human_contract.md`)
-- GitHub Advanced Security findings → Remediation Verification Gate
-- SARIF structured security events flow into governance
-
-**GitHub Actions governance pattern**
-- CI/CD pipeline results → Decision Scope Policy
-- Build success does not imply production authorization
-
-**Claude Security Guidance** (this document)
-- Claude Code write-time findings → Remediation Verification Gate
-- Real-time security detection flows into governance
-
-All four follow the same principle: **Finding ≠ Authorization**.
+**Important Disclaimers**:
+- This document describes governance concepts, not implementation details
+- No new APIs are introduced by this design
+- No autonomous remediation or deployment is proposed
+- Production authorization remains a separate, manual process
+- Integration with actual Claude security-guidance plugin requires external connector (not specified here)
 
 ---
 
-## Summary
-
-Claude's security-guidance plugin is an excellent early-warning system. It detects issues at code-write time, before they reach production.
-
-However, detection is not permission.
-
-The governance stack converts Claude's findings into structured, auditable, human-controlled decision points. A security issue that Claude catches and a developer fixes still requires:
-
-1. Verification that the fix is sound (RVG)
-2. Human judgment about what scope is appropriate (AUB)
-3. Controlled, bounded execution (Execution Ticket)
-4. Audit trail and replay capability (Audit Layer)
-
-This is not bureaucracy. It is operational reliability.
-
----
-
-**Document Status**: Specification v0.1 (Integration Pattern)  
+**Document Status**: Specification Draft (v0.1)  
 **Date**: 2026-05-27  
 **Implementation**: Not started  
-**Related**: Semgrep integration, CodeQL integration, GitHub Actions pattern
+**New APIs**: None
