@@ -92,6 +92,26 @@ SQL injection risk の例：
 
 ---
 
+## Integration Pattern Consistency
+
+This document follows the same governance principle as the other integration patterns:
+
+**Semgrep integration** (`semgrep_to_approval_flow.md`)
+- Semgrep findings → Remediation Verification Gate
+- Static analysis findings flow into governance
+
+**CodeQL / SARIF integration** (`codeql_to_human_contract.md`)
+- GitHub Advanced Security findings → Remediation Verification Gate
+- SARIF structured security events flow into governance
+
+**Claude Security Guidance** (this document)
+- Claude Code write-time findings → Remediation Verification Gate
+- Real-time security detection flows into governance
+
+All three follow the same principle: **Finding ≠ Authorization**.
+
+---
+
 ## 7. Operational Degradation Note
 
 AI Agent は security finding 確認後、確認を省略して patch / deploy に進む可能性がある。
