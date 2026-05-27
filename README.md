@@ -32,7 +32,8 @@ If you are new to this project:
 3. [Financial Approval Walkthrough](docs/walkthroughs/financial_approval_walkthrough.md)
 4. [Production Deploy Escalation](docs/walkthroughs/production_deploy_escalation.md)
 5. [Governance FAQ](docs/governance_faq.md)
-6. [All Examples Index](docs/governance_examples_index.md)
+6. [Claude Security Guidance Integration](docs/integrations/claude_security_guidance_to_governance.md)
+7. [All Examples Index](docs/governance_examples_index.md)
 
 ## Live APIs
 

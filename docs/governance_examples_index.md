@@ -7,6 +7,7 @@
 - [Security Patch Walkthrough](walkthroughs/security_patch_walkthrough.md) — How AI-generated fixes move through governance
 - [Semgrep Integration](integrations/semgrep_to_approval_flow.md) — Semgrep findings → Human Decision Contract
 - [CodeQL / SARIF Integration](integrations/codeql_to_human_contract.md) — SARIF evidence → Human Decision Contract
+- [Claude Security Guidance Integration](integrations/claude_security_guidance_to_governance.md) — Claude Code findings → Human Decision Contract
 
 ## Execution governance
 - [Production Deploy Escalation](walkthroughs/production_deploy_escalation.md) — Why production requires separate governance
