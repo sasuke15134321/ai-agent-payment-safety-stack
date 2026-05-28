@@ -1,0 +1,194 @@
+{
+  "name": "JP Counterparty / Invoice Check",
+  "version": "0.1.0",
+  "description": "Verify that counterparty names, invoice registration numbers, and corporate numbers are consistent across payment records and Japanese tax compliance requirements.",
+  "status": {
+    "api_implementation": "not_implemented",
+    "api_deployment": "not_deployed",
+    "specification": "specification_draft_only",
+    "phase": "planned",
+    "note": "This is a specification draft for market testing. Do not call this endpoint."
+  },
+  "a2a_compatible": true,
+  "layer": "L6 Trust / Source / Counterparty Check",
+  "planned_endpoint": {
+    "method": "POST",
+    "path": "/api/jp/counterparty-invoice/check",
+    "live": false,
+    "deployment_status": "not_deployed"
+  },
+  "planned_pricing": {
+    "amount": 0.02,
+    "currency": "USDC",
+    "unit": "per check",
+    "payment_protocol": "x402",
+    "payment_status": "planned_not_live",
+    "network": "Base (eip155:8453)"
+  },
+  "use_cases": [
+    {
+      "scenario": "Pre-payment counterparty verification",
+      "description": "Before executing x402/USDC/JPYC payment, verify that counterparty name, corporate number, and invoice registration number are consistent",
+      "timing": "After budget approval, before payment execution",
+      "role": "Payer AI Agent"
+    },
+    {
+      "scenario": "Post-payment evidence validation",
+      "description": "After payment completion, verify that payment destination matches invoice recipient and evidence is sufficient for audit",
+      "timing": "After payment, before monthly evidence pack creation",
+      "role": "Compliance / Audit AI Agent"
+    },
+    {
+      "scenario": "Monthly audit preparation",
+      "description": "Before converting payment records to monthly evidence pack, confirm counterparty and invoice data are audit-ready",
+      "timing": "Month-end reconciliation",
+      "role": "Accounting / Compliance AI Agent"
+    },
+    {
+      "scenario": "Cross-payment consistency check",
+      "description": "Verify that multiple payments to the same counterparty use consistent name/number/invoice data across transactions",
+      "timing": "Batch payment verification",
+      "role": "Compliance AI Agent"
+    },
+    {
+      "scenario": "Counterparty name change detection",
+      "description": "Identify when payment recipient name or corporate registration changes, flag for human review before processing",
+      "timing": "Payment submission",
+      "role": "Security / Governance AI Agent"
+    },
+    {
+      "scenario": "Japanese compliance evidence collection",
+      "description": "Gather audit-ready evidence of counterparty verification for Japanese compliance and regulatory reporting",
+      "timing": "Throughout payment lifecycle",
+      "role": "Compliance AI Agent"
+    }
+  ],
+  "constraints": {
+    "does_not_provide_tax_advice": true,
+    "does_not_provide_legal_advice": true,
+    "does_not_determine_input_tax_credit_eligibility": true,
+    "does_not_execute_payments": true,
+    "is_not_a_facilitator": true,
+    "does_not_guarantee_legal_completeness": true,
+    "does_not_perform_credit_check": true,
+    "confirmation_routing_evidence_only": true,
+    "note": "This API only verifies name/number consistency. It does not make tax, legal, or financial decisions."
+  },
+  "input_schema": {
+    "required_fields": [
+      "counterparty_name",
+      "payment_recipient_name",
+      "invoice_registration_number",
+      "corporate_number",
+      "payment_asset",
+      "payment_purpose",
+      "transaction_reference"
+    ],
+    "optional_fields": [
+      "evidence_ids"
+    ]
+  },
+  "output_schema": {
+    "decision_fields": [
+      "counterparty_status",
+      "invoice_registration_status",
+      "corporate_number_verified",
+      "name_match_status",
+      "audit_ready"
+    ],
+    "possible_statuses": [
+      "verified",
+      "requires_review",
+      "unverified",
+      "mismatch"
+    ]
+  },
+  "relationships": {
+    "upstream_apis": [
+      {
+        "name": "agent-budget-guard",
+        "layer": "L4",
+        "role": "Pre-payment budget check",
+        "call_order": "Before this API"
+      }
+    ],
+    "downstream_apis": [
+      {
+        "name": "JP Payment Evidence Guard",
+        "layer": "L5",
+        "role": "Post-payment evidence validation",
+        "call_order": "After payment execution"
+      },
+      {
+        "name": "agent-memory-api",
+        "layer": "L8",
+        "role": "Evidence storage and encryption",
+        "call_order": "After evidence guard"
+      },
+      {
+        "name": "JP Monthly Evidence Pack",
+        "layer": "L8+",
+        "role": "Monthly audit evidence bundle",
+        "call_order": "Month-end bundling"
+      }
+    ],
+    "parallel_apis": [
+      {
+        "name": "agent-security-gateway",
+        "layer": "L4",
+        "role": "Security scanning of payment instructions",
+        "timing": "Same stage as this API"
+      }
+    ],
+    "flow": "agent-budget-guard → JP Counterparty / Invoice Check → payment execution → JP Payment Evidence Guard → agent-memory-api → JP Monthly Evidence Pack"
+  },
+  "important_notice": {
+    "implementation_status": "NOT IMPLEMENTED",
+    "deployment_status": "NOT DEPLOYED",
+    "specification_status": "DRAFT ONLY",
+    "warnings": [
+      "Do not call this endpoint. It is not yet available.",
+      "This API does not provide tax advice or legal advice.",
+      "This API does not determine eligibility for input tax credit (仕入税額控除).",
+      "This API does not perform credit checks on counterparties.",
+      "This API does not execute payments directly.",
+      "Verification results must be reviewed by humans for high-risk or unusual transactions.",
+      "Use this API for verification and routing only. Do not treat verification as approval for unrestricted payment execution."
+    ]
+  },
+  "japanese_context": {
+    "applicable_regulations": [
+      "適格請求書等保存方式（インボイス制度）",
+      "法人番号公表システム",
+      "支払調書作成ルール"
+    ],
+    "compliance_scope": "Payment recipient verification and audit evidence for Japanese monthly reporting",
+    "note": "This API is designed for Japanese compliance requirements but does not replace tax professional consultation."
+  },
+  "v0_1_limitations": {
+    "corporate_number_check": "Offline or cache-based only (v0.1)",
+    "invoice_registration_check": "Offline or cache-based only (v0.1)",
+    "real_time_api_integration": "Planned for v0.2+ (not available in v0.1)",
+    "live": false
+  },
+  "v0_2_roadmap": [
+    "National Tax Agency Invoice Registration System Web-API integration",
+    "National Tax Agency Corporate Number Web-API integration",
+    "Real-time vs. cache/snapshot strategy decision",
+    "Error codes and detailed validation errors",
+    "Performance optimization for high-volume batch checking"
+  ],
+  "implementation_plan": {
+    "step_1": "OpenAPI specification draft (completed)",
+    "step_2": "llms.txt draft (completed)",
+    "step_3": "agent.json draft (this document)",
+    "step_4": "Market testing and feedback collection",
+    "step_5": "Decision on implementation approach (Option A: add to existing stack / Option B: merge with payment evidence guard / Option C: release as standalone API)"
+  },
+  "metadata": {
+    "created": "2026-05-29",
+    "market_phase": "D案: Specification-draft-only for market testing",
+    "github_reference": "https://github.com/sasuke15134321/ai-agent-payment-safety-stack",
+    "strategy_reference": "STRATEGY.md / EXTERNAL_PRIMITIVE_MAP.md"
+  }
+}

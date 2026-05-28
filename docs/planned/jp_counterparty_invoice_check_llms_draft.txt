@@ -1,0 +1,172 @@
+# JP Counterparty / Invoice Check
+
+**The API is not yet available. Do not call this endpoint.**
+**This API does not provide tax advice or legal advice.**
+**This API does not determine eligibility for input tax credit.**
+
+## Status
+Specification draft only. Not implemented. Not deployed.
+
+## Layer
+L6 Trust / Source / Counterparty Check
+
+## Purpose
+Verify that counterparty names, invoice registration numbers, and corporate numbers are consistent across payment records and Japanese tax compliance requirements.
+
+This API checks:
+- Counterparty name consistency between payment and invoice
+- Corporate number (法人番号) validity
+- Invoice registration number (適格請求書発行事業者登録番号) validity
+- Name match status (exact / partial / no match)
+- Evidence sufficiency for monthly audit
+
+## Planned Endpoint
+```
+POST /api/jp/counterparty-invoice/check
+```
+
+## Planned Price
+0.02 USDC / check
+
+## When to use this API
+
+1. **Before payment:** After budget approval (agent-budget-guard), verify counterparty information matches official records before executing x402/USDC/JPYC payment
+2. **After payment:** After payment completion, verify payment destination matches invoice recipient and evidence is sufficient
+3. **Before monthly audit:** Before converting payment records to monthly evidence pack, confirm counterparty and invoice data are audit-ready
+
+Timing in payment flow:
+```
+agent-budget-guard → JP Counterparty / Invoice Check → Payment execution → JP Payment Evidence Guard → agent-memory-api → JP Monthly Evidence Pack
+```
+
+## When NOT to use this API
+
+- Do NOT expect tax compliance opinions. This API only verifies name/number consistency, not tax eligibility.
+- Do NOT expect legal advice about invoice legitimacy.
+- Do NOT expect input tax credit (仕入税額控除) eligibility determination.
+- Do NOT expect credit checks on counterparties.
+- Do NOT expect automatic payment approval based on counterparty verification.
+
+## Example Request
+
+```json
+{
+  "counterparty_name": "Example Corporation",
+  "payment_recipient_name": "Example Corp Japan Branch",
+  "invoice_registration_number": "T1234567890123",
+  "corporate_number": "1234567890123",
+  "payment_asset": "USDC",
+  "payment_purpose": "translation_service",
+  "transaction_reference": "tx-2026-05-29-001",
+  "evidence_ids": ["ev-001", "ev-002", "ev-003"]
+}
+```
+
+## Example Responses
+
+### Case 1: Verified (audit_ready)
+
+```json
+{
+  "counterparty_status": "verified",
+  "invoice_registration_status": "valid",
+  "corporate_number_verified": true,
+  "name_match_status": "exact_match",
+  "missing_items": [],
+  "requires_human_review": false,
+  "recommended_next_step": "proceed_to_monthly_pack",
+  "evidence_status": "sufficient",
+  "audit_ready": true
+}
+```
+
+### Case 2: Requires Review (corporate_number_unverified)
+
+```json
+{
+  "counterparty_status": "requires_review",
+  "invoice_registration_status": "valid",
+  "corporate_number_verified": false,
+  "name_match_status": "exact_match",
+  "missing_items": ["corporate_number_verification_pending"],
+  "requires_human_review": true,
+  "recommended_next_step": "verify_corporate_registration",
+  "evidence_status": "insufficient",
+  "audit_ready": false
+}
+```
+
+### Case 3: Failed (name_mismatch)
+
+```json
+{
+  "counterparty_status": "mismatch",
+  "invoice_registration_status": "valid",
+  "corporate_number_verified": true,
+  "name_match_status": "no_match",
+  "missing_items": ["counterparty_name_mismatch", "payment_recipient_mismatch"],
+  "requires_human_review": true,
+  "recommended_next_step": "escalate_to_human_for_name_verification",
+  "evidence_status": "insufficient",
+  "audit_ready": false
+}
+```
+
+## Relationship to Existing APIs
+
+### JP Payment Evidence Guard (L5, live)
+- Payment Evidence Guard checks **post-payment** that service was delivered correctly
+- This API checks **pre/post-payment** that counterparty information is consistent
+- Both feed into agent-memory-api for monthly evidence pack
+
+### agent-budget-guard (L4, live)
+- Budget Guard checks spending limits before payment
+- This API checks counterparty legitimacy before payment
+- Combined flow: Budget → Counterparty Check → Payment → Evidence Guard
+
+### agent-memory-api (L8, live)
+- Stores counterparty verification results encrypted
+- Counterparty check results are included in monthly evidence pack
+- Enables audit trail for payment decisions
+
+### JP Monthly Evidence Pack (L8, planned)
+- Bundles counterparty verification + evidence guard + memory records
+- This API provides counterparty verification evidence component
+- Requires audit_ready: true before inclusion in monthly pack
+
+## Constraints
+
+### Does NOT
+- Provide tax advice or opinions about tax treatment
+- Provide legal advice about invoice validity
+- Determine eligibility for input tax credit (仕入税額控除)
+- Guarantee legal completeness of invoice
+- Perform credit checks on payment recipients
+- Execute payments directly
+- Act as a payment facilitator
+
+### Does ONLY
+- Verify name consistency (payment vs invoice)
+- Validate format of corporate number and invoice registration number
+- Check if evidence is sufficient for audit
+- Route results to human review when needed
+- Generate audit-ready records
+
+## Implementation Notes (v0.1)
+
+In v0.1:
+- Corporate number and invoice registration number validity checks are **offline or cache-based only**
+- Real-time National Tax Agency API / Corporate Registry API integration is **planned for v0.2+**
+
+In v0.2+:
+- National Tax Agency Invoice Registration System Web-API integration (検討中)
+- National Tax Agency Corporate Number Web-API integration (検討中)
+- Real-time vs. cache/snapshot strategy decision (検討中)
+
+## Further Reading
+
+See jp_counterparty_invoice_check_v01.md for full specification including:
+- Complete input/output field definitions
+- All 4 judgment case examples (正常/未確認/名義不一致 patterns)
+- Relationship to JPYC and Japanese invoicing requirements
+- v0.2+ roadmap

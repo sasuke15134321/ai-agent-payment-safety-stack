@@ -1,0 +1,323 @@
+openapi: 3.1.0
+info:
+  title: JP Counterparty / Invoice Check
+  version: 0.1.0
+  description: |
+    **Do not call this endpoint. It is not implemented or deployed.**
+    This API does not provide tax advice or legal advice.
+    This API does not determine eligibility for input tax credit.
+
+    Verify that counterparty names, invoice registration numbers, and corporate numbers are consistent across payment records and Japanese tax compliance requirements.
+
+    **Status:** Specification draft only. Not implemented. Not deployed.
+
+    **Position:** L6 Trust / Source / Counterparty Check in AI Agent Payment Safety Stack.
+
+    This API verifies that counterparty information (company name, corporate number, invoice registration number) is consistent and properly recorded before and after payments via x402/USDC/JPYC/JPY. It maintains audit-ready evidence for Japanese compliance tracking.
+
+  contact:
+    name: AI Agent Payment Safety Stack
+    url: https://github.com/sasuke15134321/ai-agent-payment-safety-stack
+  x-payment-info:
+    protocols:
+      - x402
+    authMode: x402
+    price: "0.02"
+    currency: USDC
+    status: planned
+    note: "Payment is planned, not live. This is a specification draft for market testing (D案 Step 1)."
+  x-guidance: |
+    Call this API before and after AI agent payments to verify counterparty information consistency.
+    Verify that payment recipient, corporate number, and invoice registration number all match.
+    Required before passing results to downstream agents or storing in monthly evidence packs.
+
+servers:
+  - url: https://api.example.com
+    description: Planned deployment location (not yet deployed)
+
+tags:
+  - name: Counterparty
+    description: Counterparty verification
+  - name: Invoice
+    description: Invoice registration verification
+  - name: Japan Tax Compliance
+    description: Japanese compliance and tax requirements
+  - name: x402
+    description: x402 payment protocol integration
+  - name: Audit
+    description: Audit trail and evidence management
+
+paths:
+  /api/jp/counterparty-invoice/check:
+    post:
+      summary: Verify counterparty and invoice information consistency
+      description: |
+        Check that counterparty names, corporate numbers, and invoice registration numbers are consistent across payment records and Japanese tax compliance requirements.
+
+        This API verifies:
+        - Counterparty name consistency
+        - Corporate number (法人番号) validity
+        - Invoice registration number (適格請求書発行事業者登録番号) validity
+        - Name match between payment and invoice
+        - Japanese compliance readiness
+        - Evidence sufficiency for audit
+
+        **Does NOT:**
+        - Determine eligibility for input tax credit (仕入税額控除)
+        - Provide tax advice
+        - Provide legal advice
+        - Guarantee legal completeness of invoice
+        - Perform credit checks on counterparties
+        - Execute payments
+
+      operationId: checkCounterpartyInvoice
+      tags:
+        - Counterparty
+        - Invoice
+        - Japan Tax Compliance
+        - x402
+        - Audit
+      x-payment-info:
+        protocols:
+          - x402
+        authMode: x402
+        price: "0.02"
+        currency: USDC
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - counterparty_name
+                - payment_recipient_name
+                - invoice_registration_number
+                - corporate_number
+                - payment_asset
+                - payment_purpose
+                - transaction_reference
+              properties:
+                counterparty_name:
+                  type: string
+                  example: Example Corporation
+                  description: Official name of payment recipient company
+                payment_recipient_name:
+                  type: string
+                  example: Example Corp Japan Branch
+                  description: Name as shown on invoice or payment record
+                invoice_registration_number:
+                  type: string
+                  pattern: "^T[0-9]{13}$"
+                  example: T1234567890123
+                  description: Invoice registration number (適格請求書発行事業者登録番号) starting with T
+                corporate_number:
+                  type: string
+                  pattern: "^[0-9]{13}$"
+                  example: "1234567890123"
+                  description: Corporate number (法人番号) - 13 digits
+                payment_asset:
+                  type: string
+                  enum:
+                    - USDC
+                    - JPYC
+                    - JPY
+                  example: USDC
+                  description: Payment asset type
+                payment_purpose:
+                  type: string
+                  example: translation_service
+                  description: Classification of payment purpose
+                transaction_reference:
+                  type: string
+                  example: tx-2026-05-29-001
+                  description: Transaction reference number for tracking
+                evidence_ids:
+                  type: array
+                  items:
+                    type: string
+                  example:
+                    - ev-001
+                    - ev-002
+                    - ev-003
+                  description: References to existing evidence records (optional)
+            example:
+              counterparty_name: Example Corporation
+              payment_recipient_name: Example Corp Japan Branch
+              invoice_registration_number: T1234567890123
+              corporate_number: "1234567890123"
+              payment_asset: USDC
+              payment_purpose: translation_service
+              transaction_reference: tx-2026-05-29-001
+              evidence_ids:
+                - ev-001
+                - ev-002
+                - ev-003
+      responses:
+        "200":
+          description: Counterparty and invoice check completed
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - counterparty_status
+                  - invoice_registration_status
+                  - corporate_number_verified
+                  - name_match_status
+                  - missing_items
+                  - requires_human_review
+                  - recommended_next_step
+                  - evidence_status
+                  - audit_ready
+                properties:
+                  counterparty_status:
+                    type: string
+                    enum:
+                      - verified
+                      - requires_review
+                      - unverified
+                      - mismatch
+                    description: Overall counterparty verification status
+                  invoice_registration_status:
+                    type: string
+                    enum:
+                      - valid
+                      - expired
+                      - unregistered
+                      - invalid_format
+                    description: Invoice registration number validity status
+                  corporate_number_verified:
+                    type: boolean
+                    description: Whether corporate number is verified in national database
+                  name_match_status:
+                    type: string
+                    enum:
+                      - exact_match
+                      - partial_match
+                      - no_match
+                    description: Name matching degree between payment and invoice
+                  missing_items:
+                    type: array
+                    items:
+                      type: string
+                    description: List of missing or mismatched items
+                  requires_human_review:
+                    type: boolean
+                    description: Whether human review is required
+                  recommended_next_step:
+                    type: string
+                    description: Recommended next action
+                  evidence_status:
+                    type: string
+                    enum:
+                      - sufficient
+                      - insufficient
+                    description: Sufficiency of evidence for audit
+                  audit_ready:
+                    type: boolean
+                    description: Whether information is suitable for audit and monthly reports
+              examples:
+                ok:
+                  summary: "Normal case (audit_ready)"
+                  value:
+                    counterparty_status: verified
+                    invoice_registration_status: valid
+                    corporate_number_verified: true
+                    name_match_status: exact_match
+                    missing_items: []
+                    requires_human_review: false
+                    recommended_next_step: proceed_to_monthly_pack
+                    evidence_status: sufficient
+                    audit_ready: true
+                requires_review:
+                  summary: "Corporate number unverified"
+                  value:
+                    counterparty_status: requires_review
+                    invoice_registration_status: valid
+                    corporate_number_verified: false
+                    name_match_status: exact_match
+                    missing_items:
+                      - corporate_number_verification_pending
+                    requires_human_review: true
+                    recommended_next_step: verify_corporate_registration
+                    evidence_status: insufficient
+                    audit_ready: false
+                insufficient:
+                  summary: "Insufficient evidence"
+                  value:
+                    counterparty_status: unverified
+                    invoice_registration_status: valid
+                    corporate_number_verified: true
+                    name_match_status: partial_match
+                    missing_items:
+                      - payment_recipient_mismatch
+                      - evidence_documentation
+                    requires_human_review: true
+                    recommended_next_step: request_additional_evidence
+                    evidence_status: insufficient
+                    audit_ready: false
+                failed:
+                  summary: "Name mismatch"
+                  value:
+                    counterparty_status: mismatch
+                    invoice_registration_status: valid
+                    corporate_number_verified: true
+                    name_match_status: no_match
+                    missing_items:
+                      - counterparty_name_mismatch
+                      - payment_recipient_mismatch
+                    requires_human_review: true
+                    recommended_next_step: escalate_to_human_for_name_verification
+                    evidence_status: insufficient
+                    audit_ready: false
+        "402":
+          description: Payment required (x402)
+          headers:
+            PAYMENT-SIGNATURE:
+              schema:
+                type: string
+              description: x402 payment signature
+        "400":
+          description: Invalid request (specification draft - validation not yet implemented)
+        "500":
+          description: Server error (specification draft - not yet deployed)
+
+components:
+  schemas: {}
+  securitySchemes: {}
+
+x-constraints:
+  - does_not_provide_tax_advice: true
+  - does_not_provide_legal_advice: true
+  - does_not_determine_input_tax_credit_eligibility: true
+  - does_not_execute_payments: true
+  - is_not_a_facilitator: true
+  - does_not_guarantee_legal_completeness: true
+  - does_not_perform_credit_check: true
+  - confirmation_routing_evidence_only: true
+
+x-implementation-status:
+  status: specification_draft_only
+  note: |
+    This is a specification draft for market testing (D案 Step 1).
+    Not implemented. Not deployed.
+
+    Implementation roadmap:
+    - Step 1: OpenAPI specification (this document)
+    - Step 2: Add to /llms.txt
+    - Step 3: Add to /.well-known/agent.json
+    - Step 4: Monitor marketplace response
+    - Step 5: Decision on implementation approach (A/B/C options)
+
+x-related-apis:
+  - agent-budget-guard: Payment pre-approval (L4)
+  - agent-security-gateway: Security check (L4)
+  - agent-memory-api: Evidence storage (L8)
+  - jp-payment-evidence-guard: Post-payment evidence (L5)
+  - jp-monthly-evidence-pack: Monthly evidence bundle (L8+)
+
+x-strategy-reference:
+  - "STRATEGY.md: AI-to-AI Payment Safety"
+  - "EXTERNAL_PRIMITIVE_MAP.md: External primitive layers"
+  - "jp_counterparty_invoice_check_v01.md: Full specification"
