@@ -1043,3 +1043,71 @@ x402 scheme on Base (eip155:8453)
 USDC payments to 0x60c402878EfcEcAe5733A88075328Aa2320C39BE
 """
     return PlainTextResponse(content)
+
+
+@app.get("/robots.txt", include_in_schema=False)
+async def robots_txt():
+    from fastapi.responses import PlainTextResponse
+
+    content = """# robots.txt for Agent Approval Unit Builder API
+
+User-agent: *
+Allow: /
+
+# Sitemap for API discovery
+Sitemap: https://ai-agent-payment-safety-stack.onrender.com/openapi.json
+Sitemap: https://ai-agent-payment-safety-stack.onrender.com/llms.txt
+Sitemap: https://ai-agent-payment-safety-stack.onrender.com/.well-known/x402
+"""
+    return PlainTextResponse(content)
+
+
+@app.get("/.well-known/agent.json", include_in_schema=False)
+async def agent_json():
+    base_url = "https://ai-agent-payment-safety-stack.onrender.com"
+
+    return {
+        "name": "Agent Approval Unit Builder v0.1",
+        "description": (
+            "Converts AI-generated findings, patches, payment requests, deployment proposals, "
+            "memory writes, tool execution requests, or decision-support outputs into minimal "
+            "human decision contracts (Approval Units). "
+            "Approval Unit = Human Decision Contract. "
+            "v0.1 is build-only: no approval execution, blockchain transactions, or payments."
+        ),
+        "endpoints": [
+            {
+                "method": "POST",
+                "path": "/api/approval-unit/build",
+                "description": "Build a minimal human decision contract from AI-generated findings or proposals",
+                "pricing": {
+                    "amount": "0.05",
+                    "currency": "USDC",
+                },
+            },
+            {
+                "method": "POST",
+                "path": "/api/remediation/verify",
+                "description": "Verify AI-generated remediation before human approval",
+                "pricing": {
+                    "amount": "0",
+                    "currency": "free",
+                },
+            },
+        ],
+        "payment": {
+            "scheme": "x402",
+            "network": "eip155:8453",
+            "asset": "USDC",
+            "asset_address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+            "payTo": "0x60c402878EfcEcAe5733A88075328Aa2320C39BE",
+        },
+        "metadata": {
+            "a2a_compatible": True,
+            "version": "0.1.0",
+            "openapi_docs": f"{base_url}/docs",
+            "openapi_json": f"{base_url}/openapi.json",
+            "x402_discovery": f"{base_url}/.well-known/x402",
+            "llms_txt": f"{base_url}/llms.txt",
+        },
+    }
