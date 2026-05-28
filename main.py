@@ -1245,6 +1245,20 @@ async def agent_json():
                 },
             ]
         },
+        "use_cases": [
+            "multi_agent_governance",
+            "human_approval_boundary",
+            "ai_generated_remediation_review",
+            "x402_payment_governance",
+            "a2a_workflow_guard"
+        ],
+        "constraints": {
+            "build_only": True,
+            "does_not_execute_approval": True,
+            "does_not_deploy_to_production": True,
+            "does_not_execute_payments_directly": True,
+            "does_not_replace_human_review_in_high_risk_workflows": True
+        },
         "metadata": {
             "a2a_compatible": True,
             "version": "0.1.0",
