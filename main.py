@@ -955,6 +955,7 @@ async def root():
         "version": "0.1.0",
         "endpoints": {
             "POST /api/approval-unit/build": "Build an Approval Unit (human decision contract)",
+            "POST /api/remediation/verify": "Verify AI remediation before approval (free)",
         },
         "note": "v0.1 is build-only. No approval execution, blockchain, or payments.",
         "core_concept": "Approval Unit = Human Decision Contract",
