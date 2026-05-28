@@ -1086,6 +1086,7 @@ Use this first when an AI agent has generated a remediation or patch candidate a
 Example request:
 {
   "remediation_id": "remediation_001",
+  "source_type": "security_patch",
   "finding_id": "finding_001",
   "remediation_type": "security_patch",
   "title": "SQL injection fix for user API",
