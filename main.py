@@ -1076,6 +1076,60 @@ Primary endpoints:
 Payment:
 - /api/approval-unit/build requires x402 payment: 0.05 USDC
 - /api/remediation/verify is free
+
+## Example Payloads
+
+### POST /api/remediation/verify
+
+Use this first when an AI agent has generated a remediation or patch candidate and needs to verify whether it is ready for human approval.
+
+Example request:
+{
+  "remediation_id": "remediation_001",
+  "finding_id": "finding_001",
+  "remediation_type": "security_patch",
+  "title": "SQL injection fix for user API",
+  "finding_summary": "SQL injection vulnerability detected in user API endpoint.",
+  "remediation_summary": "Replace raw SQL interpolation with parameterized query.",
+  "affected_files": ["api/user.py"],
+  "severity": "critical",
+  "risk_level": "high",
+  "evidence_ids": ["codeql_001"],
+  "test_results": ["unit_passed"],
+  "rollback_available": true,
+  "production_deploy_requested": false
+}
+
+Expected result:
+- decision: route_to_approval_unit_builder
+- approval_unit_ready: true
+- recommended_human_action: approve_staging_only
+- blocked_next_steps includes deploy_to_production
+
+### POST /api/approval-unit/build
+
+Use this after verification when an AI agent needs to convert a verified proposal into a human decision contract.
+
+Example request:
+{
+  "source_type": "security_patch",
+  "approval_unit_type": "security_patch_approval",
+  "title": "Approve SQL injection fix for staging",
+  "summary": "Patch replaces raw SQL interpolation with parameterized query.",
+  "risk_level": "high",
+  "evidence_ids": ["codeql_001"],
+  "test_results": ["unit_passed"],
+  "rollback_available": true,
+  "blocked_actions_until_approval": ["merge_to_staging", "deploy_to_production"],
+  "recommended_decision": "approve_staging_only"
+}
+
+Expected result:
+- approval_question
+- approval_unit_hash
+- recommended_human_action
+- allowed_actions limited to staging scope
+- blocked_actions includes deploy_to_production
 """
     return PlainTextResponse(content)
 
