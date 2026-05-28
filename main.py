@@ -1054,6 +1054,28 @@ POST /api/remediation/verify (free) → POST /api/approval-unit/build (0.05 USDC
 - Deployment proposal approval
 - Memory write approval
 - Tool execution approval
+
+## Direct AtoA Usage
+
+Use this service when an AI agent needs to:
+- verify an AI-generated remediation before human approval
+- convert an AI-generated proposal into a human-approvable decision unit
+- preserve the boundary between verification, approval, and execution
+- prevent approval from being interpreted as unrestricted execution
+
+Do not use this service to:
+- deploy to production
+- execute payments directly
+- approve actions automatically
+- replace human review in high-risk workflows
+
+Primary endpoints:
+- POST /api/remediation/verify
+- POST /api/approval-unit/build
+
+Payment:
+- /api/approval-unit/build requires x402 payment: 0.05 USDC
+- /api/remediation/verify is free
 """
     return PlainTextResponse(content)
 
