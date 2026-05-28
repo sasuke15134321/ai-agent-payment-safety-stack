@@ -1079,11 +1079,13 @@ Payment:
 
 ## Example Payloads
 
-### POST /api/remediation/verify
+### 1. Incomplete Remediation Example
 
-Use this first when an AI agent has generated a remediation or patch candidate and needs to verify whether it is ready for human approval.
+This example shows a remediation that needs additional verification before approval.
 
-Example request:
+POST /api/remediation/verify
+
+Example request (missing security_retest_results):
 {
   "remediation_id": "remediation_001",
   "source_type": "security_patch",
@@ -1102,14 +1104,49 @@ Example request:
 }
 
 Expected result:
+- decision: require_security_retest
+- approval_unit_ready: false
+- verification_status: incomplete
+- next_step: add security_retest_results and regression_test_results before approval unit generation
+
+### 2. Approval-ready Remediation Example
+
+This example shows a complete remediation that is ready for approval unit generation.
+
+POST /api/remediation/verify
+
+Example request (complete with all test results):
+{
+  "remediation_id": "remediation_001",
+  "source_type": "security_patch",
+  "finding_id": "finding_001",
+  "remediation_type": "security_patch",
+  "title": "SQL injection fix for user API",
+  "finding_summary": "SQL injection vulnerability detected in user API endpoint.",
+  "remediation_summary": "Replace raw SQL interpolation with parameterized query.",
+  "affected_files": ["api/user.py"],
+  "severity": "critical",
+  "risk_level": "high",
+  "evidence_ids": ["codeql_001"],
+  "test_results": ["unit_passed"],
+  "security_retest_results": ["security_retest_passed"],
+  "regression_test_results": ["regression_passed"],
+  "staging_tested": true,
+  "rollback_available": true,
+  "production_deploy_requested": false
+}
+
+Expected result:
 - decision: route_to_approval_unit_builder
 - approval_unit_ready: true
 - recommended_human_action: approve_staging_only
 - blocked_next_steps includes deploy_to_production
 
-### POST /api/approval-unit/build
+### 3. Approval Unit Build Example
 
-Use this after verification when an AI agent needs to convert a verified proposal into a human decision contract.
+Use this after successful remediation verification to convert the verified proposal into a human decision contract.
+
+POST /api/approval-unit/build (x402 payment required: 0.05 USDC)
 
 Example request:
 {
@@ -1125,12 +1162,12 @@ Example request:
   "recommended_decision": "approve_staging_only"
 }
 
-Expected result:
+Expected result (after x402 payment):
 - approval_question
 - approval_unit_hash
 - recommended_human_action
 - allowed_actions limited to staging scope
-- blocked_actions includes deploy_to_production
+- still_blocked_actions includes deploy_to_production
 """
     return PlainTextResponse(content)
 
