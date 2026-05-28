@@ -1,0 +1,234 @@
+# JP Payment Evidence Guard v0.1
+
+## Status
+
+**Specification draft only. Not implemented. Not deployed.**
+
+This is a design specification for market testing (D案 Step 1).
+The API is not yet available. Do not call this endpoint.
+
+## Position
+
+L5 Post-Payment Evidence Layer in AI Agent Payment Safety Stack.
+
+Sits between:
+- L4 Payment Pre-Approval (agent-budget-guard)
+- L8 Evidence Storage (agent-memory-api)
+
+## Purpose
+
+Verify that an AI-agent payment (x402/JPYC/USDC) produced the expected service response and maintains audit-ready evidence.
+
+Confirms:
+- Payment protocol and asset match expectations
+- API response was actually received
+- Output matches expected type
+- Japanese compliance fields (if required)
+- Evidence is suitable for audit and monthly reports
+
+## Planned Endpoint
+
+```
+POST /api/jp/payment-evidence/check
+```
+
+**PLANNED PRICE:** 0.03 USDC per check (not live)
+
+## When to Use (Planned)
+
+After completing a payment via x402, JPYC, or USDC:
+
+1. You have executed a payment (protocol, asset, amount, payer ID, payee, purpose)
+2. You received an API response
+3. Before passing results to next agent or storing in monthly evidence pack
+4. You need to verify the payment and response correspond
+5. You must maintain audit-ready evidence for Japanese compliance
+
+## When NOT to Use
+
+- Do not use if payment has not yet been executed
+- Do not use to authorize payments (use agent-budget-guard instead)
+- Do not rely on this API for legal compliance decisions
+- Do not rely on this API for tax decisions
+- Do not treat successful evidence check as output correctness guarantee
+- Do not use to replace human review in high-risk domains
+
+## What This API Does
+
+- ✅ Verifies payment and service response correspondence
+- ✅ Classifies evidence status (ok / requires_review / insufficient / failed)
+- ✅ Identifies missing audit items
+- ✅ Routes for human review if needed
+- ✅ Classifies audit readiness for monthly reports
+
+## What This API Does NOT Do
+
+- ❌ Does not execute payments
+- ❌ Is not a payment facilitator
+- ❌ Does not provide legal advice
+- ❌ Does not provide tax advice
+- ❌ Does not guarantee output correctness
+- ❌ Does not make automatic approval decisions
+- ❌ Does not make counterparty credit decisions
+
+## Example Request (Planned)
+
+```json
+{
+  "payment_protocol": "x402",
+  "asset": "USDC",
+  "amount": 0.03,
+  "payer_agent_id": "agent-abc-001",
+  "payee": "api.example.com",
+  "payment_purpose": "translation_api_call",
+  "service_endpoint": "https://api.example.com/translate",
+  "service_response_received": true,
+  "expected_output_type": "translated_text",
+  "actual_output_summary": "200 characters of translated text returned",
+  "invoice_registration_number": "T1234567890123",
+  "corporate_number": "1234567890123",
+  "evidence_ids": ["ev-001", "ev-002"]
+}
+```
+
+## Example Responses (Planned)
+
+### Response 1: OK (Audit Ready)
+
+```json
+{
+  "evidence_status": "ok",
+  "payment_response_matched": true,
+  "service_response_received": true,
+  "missing_items": [],
+  "requires_human_review": false,
+  "recommended_next_step": "proceed_to_next_agent",
+  "audit_ready": true
+}
+```
+
+→ Safe to proceed. Evidence is audit-ready.
+
+### Response 2: Requires Review (Invoice Verification)
+
+```json
+{
+  "evidence_status": "requires_review",
+  "payment_response_matched": true,
+  "service_response_received": true,
+  "missing_items": ["invoice_registration_verified"],
+  "requires_human_review": true,
+  "recommended_next_step": "verify_invoice_registration",
+  "audit_ready": false
+}
+```
+
+→ Human review required. Verify Japanese invoice registration.
+
+### Response 3: Failed (Output Mismatch)
+
+```json
+{
+  "evidence_status": "failed",
+  "payment_response_matched": false,
+  "service_response_received": true,
+  "missing_items": ["output_match", "delivery_evidence"],
+  "requires_human_review": true,
+  "recommended_next_step": "escalate_to_human",
+  "audit_ready": false
+}
+```
+
+→ Payment and output do not correspond. Escalate to human.
+
+## Relationship to Existing APIs
+
+### agent-budget-guard (L4)
+
+- **Position:** Pre-payment approval check
+- **Happens before:** This API (JP Payment Evidence Guard)
+- **Use order:** budget-guard → payment execution → this API
+
+### agent-memory-api (L8)
+
+- **Position:** Evidence storage and audit logging
+- **Happens after:** This API (JP Payment Evidence Guard)
+- **Use order:** this API → memory-api for evidence storage
+
+### ai-agent-payment-safety-stack
+
+- **Position:** L4-L8 safety layer for AI agent payments
+- **This API:** Part of L5 Post-Payment Evidence layer
+- **Integration:** Will connect to existing stack once implemented
+
+## Constraints (Always Enforced)
+
+This API:
+
+- Does NOT execute payments
+- Is NOT a payment facilitator or gateway
+- Does NOT provide legal advice or legal compliance certification
+- Does NOT provide tax advice or tax compliance certification
+- Does NOT guarantee output correctness or quality
+- Does NOT make automatic approval decisions
+- Does NOT perform counterparty credit checks
+- Evidence routing and audit-readiness classification only
+- Performs ONLY:
+  - Evidence checking
+  - Payment-response correspondence verification
+  - Audit-readiness classification
+  - Routing recommendations (require human review, escalate, proceed)
+
+## Technical Details
+
+**OpenAPI Specification:** Available in jp_payment_evidence_guard_openapi.yaml
+
+**Full Specification:** See jp_payment_evidence_guard_v01.md
+
+**Strategy Background:** STRATEGY.md / EXTERNAL_PRIMITIVE_MAP.md
+
+## Implementation Roadmap
+
+Step 1: OpenAPI specification ✅
+Step 2: Add to /llms.txt (this document is draft)
+Step 3: Add to /.well-known/agent.json
+Step 4: Monitor marketplace response (Agentic.Market / CDP Bazaar)
+Step 5: Decision on implementation approach (A/B/C options)
+
+## Next Recommended Pattern
+
+```json
+{
+  "next_recommended": {
+    "component": "jp-payment-evidence-guard",
+    "when": [
+      "payment.executed == true",
+      "service_response.received == true",
+      "before_next_agent_call",
+      "before_monthly_evidence_pack"
+    ],
+    "purpose": "Verify payment-response correspondence and maintain audit-ready evidence for Japanese compliance."
+  }
+}
+```
+
+## Agent Tags
+
+```
+payment-evidence
+audit-ready
+jp-compliance
+jpyc
+usdc
+x402
+post-payment
+evidence-verification
+audit-trail
+l5-layer
+```
+
+## Questions or Feedback
+
+This is a specification draft. Market feedback and implementation interest will inform the next phase.
+
+Currently specification only. Not available for deployment.

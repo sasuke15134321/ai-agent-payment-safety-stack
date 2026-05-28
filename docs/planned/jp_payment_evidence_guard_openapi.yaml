@@ -1,0 +1,327 @@
+openapi: 3.1.0
+info:
+  title: JP Payment Evidence Guard
+  version: 0.1.0
+  description: |
+    **Do not call this endpoint. It is not implemented or deployed.**
+
+    Verify that an AI-agent payment produced the expected service response and audit evidence.
+
+    **Status:** Specification draft only. Not implemented.
+
+    **Position:** L5 Post-Payment Evidence layer in AI Agent Payment Safety Stack.
+
+    This API verifies that a payment (x402/JPYC/USDC) resulted in expected service delivery,
+    maintains audit-ready evidence, and can support Japanese compliance requirements.
+
+  contact:
+    name: AI Agent Payment Safety Stack
+    url: https://github.com/sasuke15134321/ai-agent-payment-safety-stack
+  x-payment-info:
+    protocols:
+      - x402
+    authMode: x402
+    price: "0.03"
+    currency: USDC
+    status: planned
+    note: "Payment is planned, not live. This is a specification draft for market testing (D案 Step 1)."
+  x-guidance: |
+    Use this API after completing a payment via x402, JPYC, or USDC.
+    Verify that the service response matches expectations and evidence is audit-ready.
+    Required before passing results to downstream agents or storing in monthly evidence packs.
+
+servers:
+  - url: https://api.example.com
+    description: Planned deployment location (not yet deployed)
+
+tags:
+  - name: Evidence
+    description: Payment evidence verification
+  - name: AI Agent Payments
+    description: AI-to-AI payment verification
+  - name: JP Local Compliance
+    description: Japanese compliance and audit requirements
+  - name: x402
+    description: x402 payment protocol integration
+  - name: Audit
+    description: Audit trail and evidence management
+
+paths:
+  /api/jp/payment-evidence/check:
+    post:
+      summary: Verify payment evidence and audit readiness
+      description: |
+        Check that a payment resulted in expected service delivery and maintain audit-ready evidence.
+
+        This API verifies:
+        - Payment protocol and asset match
+        - Service response was received
+        - Output matches expected type
+        - Japanese compliance fields (if required)
+        - Evidence is suitable for audit and monthly report
+
+        **Does NOT:**
+        - Execute payments
+        - Act as a facilitator
+        - Provide legal advice
+        - Provide tax advice
+        - Guarantee output correctness
+        - Make automatic approval decisions
+      operationId: checkPaymentEvidence
+      tags:
+        - Evidence
+        - AI Agent Payments
+        - JP Local Compliance
+        - x402
+        - Audit
+      x-payment-info:
+        protocols:
+          - x402
+        authMode: x402
+        price: "0.03"
+        currency: USDC
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - payment_protocol
+                - asset
+                - amount
+                - payer_agent_id
+                - payee
+                - payment_purpose
+                - service_endpoint
+                - service_response_received
+                - expected_output_type
+                - actual_output_summary
+              properties:
+                payment_protocol:
+                  type: string
+                  enum:
+                    - x402
+                    - jpyc
+                    - usdc
+                    - other
+                  description: Payment protocol used
+                asset:
+                  type: string
+                  enum:
+                    - USDC
+                    - JPYC
+                    - JPY
+                    - other
+                  description: Payment asset type
+                amount:
+                  type: number
+                  format: double
+                  example: 0.03
+                  description: Payment amount
+                payer_agent_id:
+                  type: string
+                  example: agent-abc-001
+                  description: AI agent ID that executed the payment
+                payee:
+                  type: string
+                  example: api.example.com
+                  description: Payment recipient (domain or ID)
+                payment_purpose:
+                  type: string
+                  example: translation_api_call
+                  description: Classification of payment purpose
+                service_endpoint:
+                  type: string
+                  format: uri
+                  example: https://api.example.com/translate
+                  description: API endpoint that was called
+                service_response_received:
+                  type: boolean
+                  example: true
+                  description: Whether API response was received
+                expected_output_type:
+                  type: string
+                  example: translated_text
+                  description: Expected output type
+                actual_output_summary:
+                  type: string
+                  example: 200 characters of translated text returned
+                  description: Summary of actual output received
+                invoice_registration_number:
+                  type: string
+                  nullable: true
+                  example: T1234567890123
+                  description: |
+                    (Optional) Japanese invoice registration number (適格請求書発行事業者登録番号)
+                    Required for Japanese tax compliance
+                corporate_number:
+                  type: string
+                  nullable: true
+                  example: "1234567890123"
+                  description: |
+                    (Optional) Japanese corporate number (法人番号)
+                    Required for Japanese compliance tracking
+                evidence_ids:
+                  type: array
+                  items:
+                    type: string
+                  example:
+                    - ev-001
+                    - ev-002
+                  description: References to existing evidence records
+            example:
+              payment_protocol: x402
+              asset: USDC
+              amount: 0.03
+              payer_agent_id: agent-abc-001
+              payee: api.example.com
+              payment_purpose: translation_api_call
+              service_endpoint: https://api.example.com/translate
+              service_response_received: true
+              expected_output_type: translated_text
+              actual_output_summary: 200 characters of translated text returned
+              invoice_registration_number: T1234567890123
+              corporate_number: "1234567890123"
+              evidence_ids:
+                - ev-001
+                - ev-002
+      responses:
+        "200":
+          description: Evidence check completed
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - evidence_status
+                  - payment_response_matched
+                  - service_response_received
+                  - missing_items
+                  - requires_human_review
+                  - recommended_next_step
+                  - audit_ready
+                properties:
+                  evidence_status:
+                    type: string
+                    enum:
+                      - ok
+                      - requires_review
+                      - insufficient
+                      - failed
+                    description: Overall evidence status
+                  payment_response_matched:
+                    type: boolean
+                    description: Whether payment and API response correspond
+                  service_response_received:
+                    type: boolean
+                    description: Whether service response was actually received
+                  missing_items:
+                    type: array
+                    items:
+                      type: string
+                    description: List of missing evidence or verification items
+                  requires_human_review:
+                    type: boolean
+                    description: Whether human review is required
+                  recommended_next_step:
+                    type: string
+                    description: Recommended next action
+                  audit_ready:
+                    type: boolean
+                    description: Whether evidence is suitable for audit and monthly reports
+              examples:
+                ok:
+                  summary: "Normal case (audit_ready)"
+                  value:
+                    evidence_status: ok
+                    payment_response_matched: true
+                    service_response_received: true
+                    missing_items: []
+                    requires_human_review: false
+                    recommended_next_step: proceed_to_next_agent
+                    audit_ready: true
+                requires_review:
+                  summary: "Invoice registration number unverified"
+                  value:
+                    evidence_status: requires_review
+                    payment_response_matched: true
+                    service_response_received: true
+                    missing_items:
+                      - invoice_registration_verified
+                    requires_human_review: true
+                    recommended_next_step: verify_invoice_registration
+                    audit_ready: false
+                insufficient:
+                  summary: "Insufficient evidence"
+                  value:
+                    evidence_status: insufficient
+                    payment_response_matched: true
+                    service_response_received: false
+                    missing_items:
+                      - service_response_proof
+                      - delivery_evidence
+                    requires_human_review: true
+                    recommended_next_step: retry_or_escalate
+                    audit_ready: false
+                failed:
+                  summary: "Output mismatch"
+                  value:
+                    evidence_status: failed
+                    payment_response_matched: false
+                    service_response_received: true
+                    missing_items:
+                      - output_match
+                      - delivery_evidence
+                    requires_human_review: true
+                    recommended_next_step: escalate_to_human
+                    audit_ready: false
+        "402":
+          description: Payment required (x402)
+          headers:
+            PAYMENT-SIGNATURE:
+              schema:
+                type: string
+              description: x402 payment signature
+        "400":
+          description: Invalid request (specification draft - validation not yet implemented)
+        "500":
+          description: Server error (specification draft - not yet deployed)
+
+components:
+  schemas: {}
+  securitySchemes: {}
+
+x-constraints:
+  - does_not_execute_payments: true
+  - is_not_a_facilitator: true
+  - does_not_provide_legal_advice: true
+  - does_not_provide_tax_advice: true
+  - does_not_guarantee_output_correctness: true
+  - only_performs_evidence_checking_routing_and_audit_classification: true
+  - does_not_perform_counterparty_credit_check: true
+  - evidence_routing_and_audit_readiness_only: true
+
+x-implementation-status:
+  status: specification_draft_only
+  note: |
+    This is a specification draft for market testing (D案 Step 1).
+    Not implemented. Not deployed.
+
+    Implementation roadmap:
+    - Step 1: OpenAPI specification (this document)
+    - Step 2: Add to /llms.txt
+    - Step 3: Add to /.well-known/agent.json
+    - Step 4: Monitor marketplace response
+    - Step 5: Decision on implementation approach (A/B/C options)
+
+x-related-apis:
+  - agent-budget-guard: Payment pre-approval (L4)
+  - agent-security-gateway: Security check (L4)
+  - agent-memory-api: Evidence storage (L8)
+  - jp-monthly-evidence-pack: Monthly evidence bundle (L8+)
+
+x-strategy-reference:
+  - "STRATEGY.md: AI-to-AI Payment Safety"
+  - "EXTERNAL_PRIMITIVE_MAP.md: External primitive layers"
+  - "jp_payment_evidence_guard_v01.md: Full specification"

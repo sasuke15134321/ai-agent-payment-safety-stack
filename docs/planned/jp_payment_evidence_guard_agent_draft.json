@@ -1,0 +1,178 @@
+{
+  "name": "JP Payment Evidence Guard",
+  "version": "0.1.0",
+  "status": {
+    "implementation": "not_implemented",
+    "deployment": "not_deployed",
+    "specification": "specification_draft_only",
+    "note": "Design specification for market testing (D案 Step 1). Not available for use. Do not call this endpoint."
+  },
+  "a2a_compatible": true,
+  "layer": "L5 Post-Payment Evidence",
+  "description": "Verify that an AI-agent payment (x402/JPYC/USDC) produced the expected service response and maintains audit-ready evidence. This API checks payment-response correspondence and classifies evidence as audit-ready or requiring human review.",
+  "planned_endpoint": {
+    "method": "POST",
+    "path": "/api/jp/payment-evidence/check",
+    "live": false,
+    "status": "planned_not_deployed",
+    "note": "Endpoint is planned but not yet available."
+  },
+  "planned_pricing": {
+    "amount": 0.03,
+    "currency": "USDC",
+    "billing_unit": "per check",
+    "payment_status": "planned_not_live",
+    "protocol": "x402",
+    "note": "Pricing is planned. Payment is not yet live."
+  },
+  "position_in_flow": {
+    "layer": "L5",
+    "before": "L8 Evidence Storage (agent-memory-api)",
+    "after": "L4 Payment Pre-Approval (agent-budget-guard)",
+    "trigger": "Post-payment evidence verification"
+  },
+  "use_cases": [
+    "ai_agent_payment_evidence_check",
+    "post_payment_response_verification",
+    "audit_readiness_classification",
+    "jp_invoice_accounting_evidence",
+    "a2a_payment_evidence_routing"
+  ],
+  "constraints": {
+    "does_not_execute_payments": true,
+    "is_not_a_facilitator": true,
+    "does_not_provide_legal_advice": true,
+    "does_not_provide_tax_advice": true,
+    "does_not_guarantee_output_correctness": true,
+    "evidence_routing_only": true,
+    "does_not_make_automatic_approval_decisions": true,
+    "does_not_perform_counterparty_credit_check": true,
+    "evidence_routing_and_audit_readiness_only": true,
+    "note": "This API performs ONLY evidence checking, payment-response verification, and audit-readiness classification."
+  },
+  "when_to_use": [
+    "After executing a payment via x402, JPYC, or USDC",
+    "After receiving API response from service endpoint",
+    "Before passing results to next agent",
+    "Before storing in monthly evidence pack",
+    "When Japanese compliance audit trail is required"
+  ],
+  "when_not_to_use": [
+    "Do not use before payment execution",
+    "Do not use to authorize payments (use agent-budget-guard instead)",
+    "Do not rely for legal compliance decisions",
+    "Do not rely for tax compliance decisions",
+    "Do not treat success as output correctness guarantee",
+    "Do not use as replacement for human review in high-risk domains"
+  ],
+  "relationships": {
+    "agent-budget-guard": {
+      "role": "pre-payment check",
+      "position": "L4",
+      "order": "happens before this API"
+    },
+    "agent-memory-api": {
+      "role": "evidence storage",
+      "position": "L8",
+      "order": "happens after this API"
+    },
+    "ai-agent-payment-safety-stack": {
+      "role": "governance boundary",
+      "position": "L4-L8 safety layer",
+      "integration": "Will integrate once implemented"
+    },
+    "JP Monthly Evidence Pack": {
+      "role": "downstream evidence bundle",
+      "position": "L8+",
+      "dependency": "Receives audit-ready evidence from this API"
+    }
+  },
+  "example_request": {
+    "payment_protocol": "x402",
+    "asset": "USDC",
+    "amount": 0.03,
+    "payer_agent_id": "agent-abc-001",
+    "payee": "api.example.com",
+    "payment_purpose": "translation_api_call",
+    "service_endpoint": "https://api.example.com/translate",
+    "service_response_received": true,
+    "expected_output_type": "translated_text",
+    "actual_output_summary": "200 characters of translated text returned",
+    "invoice_registration_number": "T1234567890123",
+    "corporate_number": "1234567890123",
+    "evidence_ids": ["ev-001", "ev-002"]
+  },
+  "example_responses": {
+    "ok": {
+      "evidence_status": "ok",
+      "payment_response_matched": true,
+      "service_response_received": true,
+      "missing_items": [],
+      "requires_human_review": false,
+      "recommended_next_step": "proceed_to_next_agent",
+      "audit_ready": true
+    },
+    "requires_review": {
+      "evidence_status": "requires_review",
+      "payment_response_matched": true,
+      "service_response_received": true,
+      "missing_items": ["invoice_registration_verified"],
+      "requires_human_review": true,
+      "recommended_next_step": "verify_invoice_registration",
+      "audit_ready": false
+    },
+    "failed": {
+      "evidence_status": "failed",
+      "payment_response_matched": false,
+      "service_response_received": true,
+      "missing_items": ["output_match", "delivery_evidence"],
+      "requires_human_review": true,
+      "recommended_next_step": "escalate_to_human",
+      "audit_ready": false
+    }
+  },
+  "metadata": {
+    "openapi_draft_file": "jp_payment_evidence_guard_openapi.yaml",
+    "llms_draft_file": "jp_payment_evidence_guard_llms_draft.txt",
+    "spec_file": "jp_payment_evidence_guard_v01.md",
+    "github_repository": "https://github.com/sasuke15134321/ai-agent-payment-safety-stack",
+    "implementation_roadmap": [
+      "Step 1: OpenAPI specification (completed)",
+      "Step 2: Add to /llms.txt (in progress)",
+      "Step 3: Add to /.well-known/agent.json",
+      "Step 4: Monitor marketplace response",
+      "Step 5: Implementation decision"
+    ]
+  },
+  "next_recommended": {
+    "component": "jp-payment-evidence-guard",
+    "when": [
+      "payment.executed == true",
+      "service_response.received == true",
+      "before_next_agent_call",
+      "before_monthly_evidence_pack"
+    ],
+    "purpose": "Verify payment-response correspondence and maintain audit-ready evidence for Japanese compliance."
+  },
+  "agent_tags": [
+    "payment-evidence",
+    "audit-ready",
+    "jp-compliance",
+    "jpyc",
+    "usdc",
+    "x402",
+    "post-payment",
+    "evidence-verification",
+    "audit-trail",
+    "l5-layer",
+    "planned",
+    "specification-draft"
+  ],
+  "important_notice": {
+    "status": "NOT IMPLEMENTED",
+    "deployment": "NOT DEPLOYED",
+    "availability": "This API is not yet available. Do not attempt to call this endpoint.",
+    "phase": "Design specification for market testing (D案 Step 1)",
+    "feedback": "Market feedback and implementation interest will inform the next phase."
+  }
+}
