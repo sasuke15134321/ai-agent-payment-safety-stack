@@ -1042,6 +1042,18 @@ remediation/verify: Free
 
 x402 scheme on Base (eip155:8453)
 USDC payments to 0x60c402878EfcEcAe5733A88075328Aa2320C39BE
+
+## Recommended Flow
+
+POST /api/remediation/verify (free) → POST /api/approval-unit/build (0.05 USDC)
+
+## Use Cases
+
+- Security patch approval
+- Payment request approval
+- Deployment proposal approval
+- Memory write approval
+- Tool execution approval
 """
     return PlainTextResponse(content)
 
@@ -1102,6 +1114,22 @@ async def agent_json():
             "asset": "USDC",
             "asset_address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
             "payTo": "0x60c402878EfcEcAe5733A88075328Aa2320C39BE",
+        },
+        "workflow": {
+            "recommended_flow": [
+                {
+                    "step": 1,
+                    "endpoint": "POST /api/remediation/verify",
+                    "pricing": "free",
+                    "description": "Verify AI-generated remediation before routing to approval",
+                },
+                {
+                    "step": 2,
+                    "endpoint": "POST /api/approval-unit/build",
+                    "pricing": "0.05 USDC",
+                    "description": "Build human decision contract from verified output",
+                },
+            ]
         },
         "metadata": {
             "a2a_compatible": True,
