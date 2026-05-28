@@ -1000,3 +1000,46 @@ async def x402_discovery_manifest():
             }
         ],
     }
+
+
+@app.get("/llms.txt", include_in_schema=False)
+async def llms_txt():
+    from fastapi.responses import PlainTextResponse
+
+    base_url = "https://ai-agent-payment-safety-stack.onrender.com"
+
+    content = """# Agent Approval Unit Builder API
+
+## Name
+Agent Approval Unit Builder v0.1
+
+## Description
+Converts AI-generated findings, patches, payment requests, deployment proposals, memory writes, tool execution requests, or decision-support outputs into minimal human decision contracts (Approval Units).
+
+Core concept: Approval Unit = Human Decision Contract
+
+v0.1 is build-only. No approval execution, blockchain transactions, or payments.
+
+## Endpoints
+
+POST /api/approval-unit/build — Build a human decision contract (0.05 USDC)
+POST /api/remediation/verify — Verify AI remediation before approval (free)
+
+## Additional Resources
+
+OpenAPI Docs: https://ai-agent-payment-safety-stack.onrender.com/docs
+OpenAPI JSON: https://ai-agent-payment-safety-stack.onrender.com/openapi.json
+Health Check: https://ai-agent-payment-safety-stack.onrender.com/health
+x402 Discovery: https://ai-agent-payment-safety-stack.onrender.com/.well-known/x402
+
+## Pricing
+
+approval-unit/build: 0.05 USDC per call
+remediation/verify: Free
+
+## Payment
+
+x402 scheme on Base (eip155:8453)
+USDC payments to 0x60c402878EfcEcAe5733A88075328Aa2320C39BE
+"""
+    return PlainTextResponse(content)
