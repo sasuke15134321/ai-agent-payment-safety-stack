@@ -1,0 +1,214 @@
+# JP Metadata Sanitizer
+
+**Do not call this endpoint. It is not implemented or deployed.**
+**This API is a specification draft for market testing only.**
+
+## Status
+Specification draft only. Not implemented. Not deployed.
+
+## Position
+L4 Pre-Payment Guard / L6 Safety Check
+
+## Purpose
+Scan payment metadata (x402/A2A/AtoA) for accidental exposure of personal information, contract details, credentials, or internal memos before transmission to external services.
+
+This API checks:
+- Personal information exposure (names, emails, phone numbers, IDs)
+- Contract information leakage (sensitive negotiation details, confidential terms)
+- Credential exposure (API keys, passwords, secrets, tokens)
+- Internal memo inclusion (confidential project context, internal decision rationale)
+- Other sensitive content that should not reach external services
+
+## Endpoint
+```
+POST /api/jp/metadata/sanitize
+```
+
+## Price (Planned)
+0.03 ~ 0.10 USDC / scan
+
+## When to use this API
+
+1. **Before metadata transmission:** Before sending payment metadata via x402, A2A, or AtoA payment flows, scan for sensitive content
+2. **Pre-facilitator check:** Before passing metadata to payment facilitators or blockchain networks, verify no sensitive information is included
+3. **Payment safety workflow:** As part of the safety check chain before payment execution
+
+Timing in payment flow:
+```
+JP Counterparty Check → JP Metadata Sanitizer → Payment execution → JP Payment Evidence Guard → agent-memory-api
+```
+
+## When NOT to use this API
+
+- Do NOT expect legal advice about what metadata should or should not be sent
+- Do NOT expect compliance judgment or regulatory analysis
+- Do NOT expect automatic compliance with privacy regulations
+- Do NOT expect the API to redact or mask data itself
+- Do NOT expect credential storage or recovery
+- Do NOT expect individual identification or tracking
+- Do NOT expect the API to execute payments or modify metadata
+- Do NOT treat this as a payment facilitator or intermediary
+
+## Example Request
+
+```json
+{
+  "payment_protocol": "x402",
+  "metadata_payload": {
+    "payer_agent_id": "agent-translation-001",
+    "payee": "api.example.com",
+    "payment_purpose": "translation_service",
+    "internal_memo": "Budget approved by finance team",
+    "contact_email": "john@company.example.com"
+  },
+  "context_type": "x402",
+  "payer_agent_id": "agent-translation-001",
+  "payee": "api.example.com",
+  "payment_purpose": "translation_service",
+  "scan_targets": ["personal_info", "credential", "internal_memo"]
+}
+```
+
+## Example Responses
+
+### Case 1: Safe metadata (ok)
+
+```json
+{
+  "sanitization_status": "ok",
+  "detected_sensitive_fields": [],
+  "detected_categories": [],
+  "flagged_fields": [],
+  "redaction_required": false,
+  "risk_level": "low",
+  "safe_to_send_to_payment_metadata": true,
+  "issues": [],
+  "requires_human_review": false,
+  "recommended_next_step": "proceed_with_payment",
+  "audit_ready": true
+}
+```
+
+### Case 2: Risky metadata detected (flagged)
+
+```json
+{
+  "sanitization_status": "flagged",
+  "detected_sensitive_fields": ["project_context"],
+  "detected_categories": ["internal_memo"],
+  "flagged_fields": ["project_context"],
+  "redaction_required": true,
+  "risk_level": "medium",
+  "safe_to_send_to_payment_metadata": false,
+  "issues": [
+    {
+      "field": "project_context",
+      "category": "internal_memo",
+      "risk": "internal_reference",
+      "reason": "Internal project name may leak business strategy"
+    }
+  ],
+  "requires_human_review": true,
+  "recommended_next_step": "remove_field_or_approve_with_caution",
+  "audit_ready": false
+}
+```
+
+### Case 3: High-risk metadata detected (blocked)
+
+```json
+{
+  "sanitization_status": "blocked",
+  "detected_sensitive_fields": ["email", "api_key"],
+  "detected_categories": ["personal_info", "credential"],
+  "flagged_fields": ["email", "api_key"],
+  "redaction_required": true,
+  "risk_level": "high",
+  "safe_to_send_to_payment_metadata": false,
+  "issues": [
+    {
+      "field": "email",
+      "category": "personal_info",
+      "risk": "pii_exposure",
+      "reason": "Personal email address - BLOCKED"
+    },
+    {
+      "field": "api_key",
+      "category": "credential",
+      "risk": "credential_leakage",
+      "reason": "API key detected - BLOCKED"
+    }
+  ],
+  "requires_human_review": true,
+  "recommended_next_step": "block_payment_and_remediate",
+  "audit_ready": false
+}
+```
+
+## Relationship to Existing APIs
+
+### agent-security-gateway (L4, live)
+- Security Gateway checks **prompt injection and instruction safety**
+- This API checks **metadata content safety**
+- Both operate **before payment execution**
+- Call order: security-gateway (instruction check) → metadata-sanitizer (metadata check) → payment
+
+**Important:** Metadata Sanitizer can be implemented as an **extension or derivative** of agent-security-gateway, or as a separate API. Decision to be made in v0.2+.
+
+### JP Counterparty / Invoice Check (L6, planned)
+- Counterparty Check verifies **payment recipient identity**
+- This API verifies **metadata safety for transmission**
+- Both operate **before payment execution**
+- Combined flow: Counterparty Check → Metadata Sanitizer → Payment
+
+### JP Payment Evidence Guard (L5, planned)
+- Payment Evidence Guard checks **post-payment service delivery**
+- This API checks **pre-payment metadata safety**
+- Both generate evidence for monthly audit
+
+### agent-memory-api (L8, live)
+- Stores metadata sanitization results encrypted
+- Includes sanitization status in audit trail
+- Enables traceability of what metadata was considered safe
+
+## Constraints
+
+### Does NOT
+- Execute payments directly
+- Act as a payment facilitator
+- Provide legal advice about privacy regulations
+- Provide compliance judgment about data handling
+- Store or retain the scanned metadata
+- Send metadata to external services
+- Identify individuals from metadata content
+- Automatically redact or mask sensitive fields
+
+### Does ONLY
+- Scan and detect sensitive content
+- Flag problematic fields
+- Route results to human decision
+- Classify metadata safety for audit purposes
+
+## Implementation Notes (v0.1)
+
+In v0.1:
+- Metadata scanning is **pattern and keyword-based only**
+- No machine learning or AI-based anomaly detection
+- No PII database integration
+- No automatic redaction capability
+
+In v0.2+:
+- AI-based anomaly detection for metadata patterns (検討中)
+- Japanese language-specific PII patterns (検討中)
+- Third-party API integration for PII databases (検討中)
+- Automatic redaction and masking suggestions (検討中)
+- Implementation option decision (standalone / security-gateway extension / middleware) (検討中)
+
+## Further Reading
+
+See jp_metadata_sanitizer_v01.md for full specification including:
+- Complete input/output field definitions
+- All detection categories and risk levels
+- Relationship to x402 payment protocol
+- A2A and AtoA context considerations
+- v0.2+ roadmap

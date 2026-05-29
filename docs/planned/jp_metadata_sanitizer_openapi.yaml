@@ -1,0 +1,356 @@
+openapi: 3.1.0
+info:
+  title: JP Metadata Sanitizer
+  version: 0.1.0
+  description: |
+    **Do not call this endpoint. It is not implemented or deployed.**
+
+    Scan payment metadata (x402/A2A/AtoA) for accidental exposure of personal information, contract details, credentials, or internal memos before transmission to external services.
+
+    **Status:** Specification draft only. Not implemented. Not deployed.
+
+    **Position:** L4 Pre-Payment Guard / L6 Safety Check in AI Agent Payment Safety Stack.
+
+    This API scans metadata attached to payment messages for leakage risks, flags sensitive content, and prevents unintended information exposure to payment facilitators, blockchain networks, or external APIs.
+
+  contact:
+    name: AI Agent Payment Safety Stack
+    url: https://github.com/sasuke15134321/ai-agent-payment-safety-stack
+  x-payment-info:
+    protocols:
+      - x402
+    authMode: x402
+    price_range: "0.03 ~ 0.10"
+    currency: USDC
+    status: planned
+    note: "Payment is planned, not live. This is a specification draft for market testing (D案 Step 1). This API is not yet deployed."
+  x-guidance: |
+    Call this API before sending payment metadata to external services via x402, A2A, or AtoA payment flows.
+    Scan metadata for personal information, credentials, internal memos, or other sensitive content.
+    Required before authorizing metadata transmission to payment facilitators or blockchain networks.
+
+servers:
+  - url: https://api.example.com
+    description: Planned deployment location (not yet deployed)
+
+tags:
+  - name: Metadata Sanitization
+    description: Metadata scanning and safety verification
+  - name: AI Agent Payments
+    description: AI-to-AI and AI-to-API payment safety
+  - name: Privacy
+    description: Personal information and privacy protection
+  - name: Safety
+    description: Safety checks for AI agent operations
+  - name: JP Local Context
+    description: Japanese compliance and local context
+  - name: x402
+    description: x402 payment protocol integration
+
+paths:
+  /api/jp/metadata/sanitize:
+    post:
+      summary: Scan payment metadata for information leakage risks
+      description: |
+        Check payment metadata for accidental exposure of personal information, contract details, credentials, internal memos, or other sensitive content before transmission to external services.
+
+        This API scans:
+        - Personal information (names, emails, phone numbers, IDs)
+        - Contract information (sensitive terms, negotiation details)
+        - Credentials (API keys, passwords, secrets, tokens)
+        - Internal memos (internal context, decision rationale, confidential notes)
+        - Other sensitive content (confidential project names, internal references)
+
+        **Does NOT:**
+        - Store or log the metadata
+        - Execute payments
+        - Act as a payment facilitator
+        - Provide legal advice or compliance judgment
+        - Identify individuals from metadata
+        - Send metadata externally
+
+      operationId: sanitizePaymentMetadata
+      tags:
+        - Metadata Sanitization
+        - AI Agent Payments
+        - Privacy
+        - Safety
+        - JP Local Context
+        - x402
+      x-payment-info:
+        protocols:
+          - x402
+        authMode: x402
+        price_range: "0.03 ~ 0.10"
+        currency: USDC
+        status: planned
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - payment_protocol
+                - metadata_payload
+                - context_type
+                - payer_agent_id
+                - payee
+                - payment_purpose
+              properties:
+                payment_protocol:
+                  type: string
+                  enum:
+                    - x402
+                    - a2a
+                    - atoa
+                    - other
+                  example: x402
+                  description: Payment protocol (x402 / A2A / AtoA / other)
+                metadata_payload:
+                  type: object
+                  example:
+                    payer_agent_id: agent-translation-001
+                    payee: api.example.com
+                    payment_purpose: translation_service
+                    internal_memo: "Budget approved by finance team"
+                    contact_email: "john@company.example.com"
+                  description: Metadata object to scan
+                context_type:
+                  type: string
+                  enum:
+                    - x402
+                    - a2a
+                    - atoa
+                    - other
+                  example: x402
+                  description: x402 / A2A / AtoA / other
+                payer_agent_id:
+                  type: string
+                  example: agent-translation-001
+                  description: AI agent ID executing the payment
+                payee:
+                  type: string
+                  example: api.example.com
+                  description: Payment recipient (domain or API ID)
+                payment_purpose:
+                  type: string
+                  example: translation_service
+                  description: Classification of payment purpose
+                scan_targets:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                      - personal_info
+                      - contract_info
+                      - credential
+                      - internal_memo
+                      - confidential_context
+                  example:
+                    - personal_info
+                    - credential
+                    - internal_memo
+                  description: Categories to scan (omit to scan all)
+            example:
+              payment_protocol: x402
+              metadata_payload:
+                payer_agent_id: agent-translation-001
+                payee: api.example.com
+                payment_purpose: translation_service
+                internal_memo: "Budget approved by finance team"
+                contact_email: "john@company.example.com"
+              context_type: x402
+              payer_agent_id: agent-translation-001
+              payee: api.example.com
+              payment_purpose: translation_service
+              scan_targets:
+                - personal_info
+                - credential
+                - internal_memo
+      responses:
+        "200":
+          description: Metadata sanitization check completed
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - sanitization_status
+                  - detected_sensitive_fields
+                  - redaction_required
+                  - safe_to_send_to_payment_metadata
+                  - recommended_next_step
+                properties:
+                  sanitization_status:
+                    type: string
+                    enum:
+                      - ok
+                      - flagged
+                      - blocked
+                    description: Metadata safety status
+                  detected_sensitive_fields:
+                    type: array
+                    items:
+                      type: string
+                    description: List of detected sensitive field names
+                  detected_categories:
+                    type: array
+                    items:
+                      type: string
+                    description: Categories of detected sensitivity
+                  flagged_fields:
+                    type: array
+                    items:
+                      type: string
+                    description: Fields with issues
+                  redaction_required:
+                    type: boolean
+                    description: Whether fields require masking or removal
+                  risk_level:
+                    type: string
+                    enum:
+                      - low
+                      - medium
+                      - high
+                    description: Risk level (low / medium / high)
+                  safe_to_send_to_payment_metadata:
+                    type: boolean
+                    description: Safe to send to payment metadata layer (required field)
+                  issues:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        field:
+                          type: string
+                        category:
+                          type: string
+                        risk:
+                          type: string
+                        reason:
+                          type: string
+                    description: Detailed issue list
+                  requires_human_review:
+                    type: boolean
+                    description: Whether human review is required
+                  recommended_next_step:
+                    type: string
+                    description: Recommended action
+                  audit_ready:
+                    type: boolean
+                    description: Whether to include in audit log
+              examples:
+                ok:
+                  summary: "Safe metadata (ok)"
+                  value:
+                    sanitization_status: ok
+                    detected_sensitive_fields: []
+                    detected_categories: []
+                    flagged_fields: []
+                    redaction_required: false
+                    risk_level: low
+                    safe_to_send_to_payment_metadata: true
+                    issues: []
+                    requires_human_review: false
+                    recommended_next_step: proceed_with_payment
+                    audit_ready: true
+                flagged:
+                  summary: "Risky metadata detected (flagged)"
+                  value:
+                    sanitization_status: flagged
+                    detected_sensitive_fields:
+                      - project_context
+                    detected_categories:
+                      - internal_memo
+                    flagged_fields:
+                      - project_context
+                    redaction_required: true
+                    risk_level: medium
+                    safe_to_send_to_payment_metadata: false
+                    issues:
+                      - field: project_context
+                        category: internal_memo
+                        risk: internal_reference
+                        reason: Internal project name may leak business strategy
+                    requires_human_review: true
+                    recommended_next_step: remove_field_or_approve_with_caution
+                    audit_ready: false
+                blocked:
+                  summary: "High-risk metadata detected (blocked)"
+                  value:
+                    sanitization_status: blocked
+                    detected_sensitive_fields:
+                      - email
+                      - api_key
+                    detected_categories:
+                      - personal_info
+                      - credential
+                    flagged_fields:
+                      - email
+                      - api_key
+                    redaction_required: true
+                    risk_level: high
+                    safe_to_send_to_payment_metadata: false
+                    issues:
+                      - field: email
+                        category: personal_info
+                        risk: pii_exposure
+                        reason: Personal email address - BLOCKED
+                      - field: api_key
+                        category: credential
+                        risk: credential_leakage
+                        reason: API key detected - BLOCKED
+                    requires_human_review: true
+                    recommended_next_step: block_payment_and_remediate
+                    audit_ready: false
+        "402":
+          description: Payment required (x402)
+          headers:
+            PAYMENT-SIGNATURE:
+              schema:
+                type: string
+              description: x402 payment signature
+        "400":
+          description: Invalid request (specification draft - validation not yet implemented)
+        "500":
+          description: Server error (specification draft - not yet deployed)
+
+components:
+  schemas: {}
+  securitySchemes: {}
+
+x-constraints:
+  - does_not_execute_payments: true
+  - is_not_a_facilitator: true
+  - does_not_provide_legal_advice: true
+  - does_not_provide_compliance_judgment: true
+  - does_not_store_metadata: true
+  - does_not_send_metadata_externally: true
+  - does_not_identify_individuals: true
+  - evidence_routing_safety_classification_only: true
+
+x-implementation-status:
+  status: specification_draft_only
+  note: |
+    This is a specification draft for market testing (D案 Step 1).
+    Not implemented. Not deployed.
+
+    Implementation roadmap:
+    - Step 1: OpenAPI specification (this document)
+    - Step 2: Add to /llms.txt
+    - Step 3: Add to /.well-known/agent.json
+    - Step 4: Monitor marketplace response
+    - Step 5: Decision on implementation approach (Option A: standalone / Option B: agent-security-gateway extension / Option C: payment middleware)
+
+x-related-apis:
+  - agent-security-gateway: Prompt injection and instruction safety (L4)
+  - agent-budget-guard: Budget and spending controls (L4)
+  - jp-counterparty-invoice-check: Counterparty verification (L6)
+  - jp-payment-evidence-guard: Post-payment evidence verification (L5)
+  - agent-memory-api: Evidence storage and audit trail (L8)
+
+x-strategy-reference:
+  - "STRATEGY.md: AI-to-AI Payment Safety"
+  - "EXTERNAL_PRIMITIVE_MAP.md: External primitive layers"
+  - "jp_metadata_sanitizer_v01.md: Full specification"

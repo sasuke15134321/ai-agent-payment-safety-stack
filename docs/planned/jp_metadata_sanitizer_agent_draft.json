@@ -1,0 +1,200 @@
+{
+  "name": "JP Metadata Sanitizer",
+  "version": "0.1.0",
+  "description": "Scan payment metadata (x402/A2A/AtoA) for accidental exposure of personal information, contract details, credentials, or internal memos before transmission to external services.",
+  "status": {
+    "api_implementation": "not_implemented",
+    "api_deployment": "not_deployed",
+    "specification": "specification_draft_only",
+    "phase": "planned",
+    "note": "This is a specification draft for market testing. Do not call this endpoint."
+  },
+  "a2a_compatible": true,
+  "layer": "L4 / L6 Metadata Safety Guard",
+  "planned_endpoint": {
+    "method": "POST",
+    "path": "/api/jp/metadata/sanitize",
+    "live": false,
+    "deployment_status": "not_deployed"
+  },
+  "planned_pricing": {
+    "price_range": "0.03 ~ 0.10",
+    "currency": "USDC",
+    "billing_unit": "per scan",
+    "payment_status": "planned_not_live",
+    "payment_protocol": "x402",
+    "network": "Base (eip155:8453)"
+  },
+  "use_cases": [
+    {
+      "scenario": "AI agent payment metadata sanitization",
+      "description": "Before executing x402/A2A/AtoA payment, scan metadata for sensitive content",
+      "timing": "Pre-payment"
+    },
+    {
+      "scenario": "x402 metadata safety check",
+      "description": "Verify x402 payment metadata does not contain personal info, credentials, or internal memos",
+      "timing": "Before x402 transmission"
+    },
+    {
+      "scenario": "Japanese business context metadata scan",
+      "description": "Detect sensitive Japanese business context (internal project names, negotiation details, etc.)",
+      "timing": "Pre-payment"
+    },
+    {
+      "scenario": "Sensitive field detection",
+      "description": "Identify and flag PII, credentials, internal context, contract information",
+      "timing": "Metadata scanning phase"
+    },
+    {
+      "scenario": "Pre-payment metadata guard",
+      "description": "Last safety check before metadata reaches payment facilitator or blockchain",
+      "timing": "Payment preparation"
+    }
+  ],
+  "constraints": {
+    "does_not_execute_payments": true,
+    "is_not_a_facilitator": true,
+    "does_not_provide_legal_advice": true,
+    "does_not_provide_compliance_judgment": true,
+    "does_not_store_metadata": true,
+    "does_not_send_metadata_externally": true,
+    "does_not_identify_individuals": true,
+    "evidence_routing_safety_classification_only": true,
+    "note": "This API only scans and classifies metadata. It does not execute, facilitate, provide advice, or retain data."
+  },
+  "input_schema": {
+    "required_fields": [
+      "payment_protocol",
+      "metadata_payload",
+      "context_type",
+      "payer_agent_id",
+      "payee",
+      "payment_purpose"
+    ],
+    "optional_fields": [
+      "scan_targets"
+    ]
+  },
+  "key_outputs": [
+    {
+      "field": "sanitization_status",
+      "type": "string",
+      "enum": ["ok", "flagged", "blocked"],
+      "description": "Overall metadata safety status"
+    },
+    {
+      "field": "detected_sensitive_fields",
+      "type": "array",
+      "description": "List of detected sensitive field names"
+    },
+    {
+      "field": "redaction_required",
+      "type": "boolean",
+      "description": "Whether fields need masking or removal"
+    },
+    {
+      "field": "safe_to_send_to_payment_metadata",
+      "type": "boolean",
+      "description": "Safe to send to payment metadata layer (REQUIRED FIELD)",
+      "critical": true
+    },
+    {
+      "field": "recommended_next_step",
+      "type": "string",
+      "description": "Recommended action based on scan results"
+    }
+  ],
+  "relationships": {
+    "related_safety_apis": [
+      {
+        "name": "agent-security-gateway",
+        "layer": "L4",
+        "role": "Prompt injection and instruction safety check",
+        "note": "Metadata Sanitizer can be implemented as extension or derivative of security-gateway"
+      }
+    ],
+    "downstream_apis": [
+      {
+        "name": "JP Payment Evidence Guard",
+        "layer": "L5",
+        "role": "Post-payment service delivery and evidence verification",
+        "timing": "After payment execution"
+      }
+    ],
+    "parallel_apis": [
+      {
+        "name": "JP Counterparty / Invoice Check",
+        "layer": "L6",
+        "role": "Counterparty and invoice information verification",
+        "timing": "Same stage as metadata sanitization"
+      }
+    ],
+    "optional_downstream": [
+      {
+        "name": "agent-memory-api",
+        "layer": "L8",
+        "role": "Encrypted storage of sanitization results and audit trail",
+        "timing": "After verification"
+      }
+    ],
+    "flow": "JP Counterparty Check → JP Metadata Sanitizer → Payment execution → JP Payment Evidence Guard → agent-memory-api"
+  },
+  "important_notice": {
+    "implementation_status": "NOT IMPLEMENTED",
+    "deployment_status": "NOT DEPLOYED",
+    "specification_status": "DRAFT ONLY",
+    "warnings": [
+      "Do not call this endpoint. It is not yet available.",
+      "This is a specification draft for market testing.",
+      "The API is planned, not live. No actual deployment exists.",
+      "Metadata is scanned only - not stored, modified, or transmitted externally.",
+      "This API does not provide legal advice or compliance judgment.",
+      "Flagged metadata requires human decision before payment proceeds.",
+      "Use this API for detection and safety classification only."
+    ]
+  },
+  "implementation_approach": {
+    "option_a": {
+      "name": "Standalone API",
+      "description": "Independent /api/jp/metadata/sanitize endpoint",
+      "status": "possible"
+    },
+    "option_b": {
+      "name": "Security Gateway Extension",
+      "description": "Integrated into agent-security-gateway as metadata scanning module",
+      "status": "possible"
+    },
+    "option_c": {
+      "name": "Payment Middleware",
+      "description": "Transparent middleware in x402 payment processing pipeline",
+      "status": "possible"
+    },
+    "decision_timing": "v0.2 implementation phase"
+  },
+  "v0_1_limitations": {
+    "metadata_check": "Pattern and keyword-based only (v0.1)",
+    "ml_detection": "No machine learning anomaly detection (v0.1)",
+    "pii_database": "No external PII database integration (v0.1)",
+    "auto_redaction": "No automatic masking or redaction (v0.1)",
+    "live": false
+  },
+  "v0_2_roadmap": [
+    "AI-based anomaly detection for metadata patterns",
+    "Japanese language-specific PII pattern detection",
+    "Third-party PII database integration",
+    "Automatic redaction and masking suggestions",
+    "Implementation option decision (standalone / extension / middleware)"
+  ],
+  "metadata": {
+    "created": "2026-05-29",
+    "market_phase": "D案: Specification-draft-only for market testing",
+    "draft_files": {
+      "specification": "jp_metadata_sanitizer_v01.md",
+      "openapi": "jp_metadata_sanitizer_openapi.yaml",
+      "llms": "jp_metadata_sanitizer_llms_draft.txt"
+    },
+    "github_reference": "https://github.com/sasuke15134321/ai-agent-payment-safety-stack",
+    "strategy_reference": "STRATEGY.md / EXTERNAL_PRIMITIVE_MAP.md"
+  }
+}
