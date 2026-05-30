@@ -1412,6 +1412,13 @@ Expected result (after x402 payment):
     return PlainTextResponse(content)
 
 
+@app.get("/skill.md", include_in_schema=False)
+async def skill_md():
+    from fastapi.responses import FileResponse
+
+    return FileResponse("skill.md", media_type="text/plain")
+
+
 @app.get("/robots.txt", include_in_schema=False)
 async def robots_txt():
     from fastapi.responses import PlainTextResponse
