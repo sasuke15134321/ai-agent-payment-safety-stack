@@ -55,13 +55,17 @@ app.add_middleware(
 
 # x402 paid endpoint config
 _PAID_ENDPOINTS = {
-    ("POST", "/api/approval-unit/build"): "0.05",
+    ("POST", "/api/approval-unit/build"):    "0.05",
+    ("POST", "/api/payment-evidence/check"): "0.03",
 }
 
 _ENDPOINT_DESCRIPTIONS = {
     "/api/approval-unit/build": (
         "Build a minimal human decision contract from AI-generated findings, patches, "
         "payment requests, or decision-support outputs."
+    ),
+    "/api/payment-evidence/check": (
+        "Verify that an AI-agent payment produced the expected service response and audit evidence."
     ),
 }
 
@@ -105,6 +109,50 @@ _BAZAAR_EXTENSIONS = {
 }
 
 
+# CDP Bazaar indexing extension for payment-evidence/check
+_BAZAAR_EXTENSIONS_EVIDENCE = {
+    "bazaar": {
+        "discoverable": True,
+        "info": {
+            "input": {
+                "type": "http",
+                "method": "POST",
+                "bodyType": "json",
+                "body": {
+                    "payment_reference": "pay_123",
+                    "payment_asset": "USDC",
+                    "amount": "0.03",
+                    "paid_endpoint": "/api/example",
+                    "service_response_received": True,
+                    "delivery_status": "delivered",
+                    "evidence_ids": ["ev_001"],
+                },
+            },
+            "output": {
+                "type": "json",
+                "example": {
+                    "payment_evidence_status": "ok",
+                    "payment_response_matched": True,
+                    "audit_ready": True,
+                    "requires_human_review": False,
+                    "recommended_next_step": "store_evidence",
+                },
+            },
+        },
+        "schema": {
+            "type": "object",
+            "properties": {
+                "payment_evidence_status": {"type": "string"},
+                "payment_response_matched": {"type": "boolean"},
+                "audit_ready": {"type": "boolean"},
+                "requires_human_review": {"type": "boolean"},
+                "recommended_next_step": {"type": "string"},
+            },
+        },
+    }
+}
+
+
 @app.middleware("http")
 async def x402_payment_middleware(request: Request, call_next):
     method = request.method
@@ -142,6 +190,11 @@ async def x402_payment_middleware(request: Request, call_next):
                 _pc["extensions"] = _BAZAAR_EXTENSIONS
                 _pc["approval_unit_id"] = None
                 _pc["approval_unit_hash"] = None
+                _pc["next_recommended"] = "complete_x402_payment"
+            elif path == "/api/payment-evidence/check":
+                _pc["extensions"] = _BAZAAR_EXTENSIONS_EVIDENCE
+                _pc["payment_evidence_status"] = None
+                _pc["audit_ready"] = False
                 _pc["next_recommended"] = "complete_x402_payment"
             return JSONResponse(
                 status_code=402,
@@ -623,6 +676,40 @@ async def build_approval_unit(req: ApprovalUnitBuildRequest, request: Request):
 # Remediation Verification Gate v0.1
 # ─────────────────────────────────────────────
 
+# ─────────────────────────────────────────────
+# JP Payment Evidence Guard v0.1 — models
+# ─────────────────────────────────────────────
+
+class PaymentEvidenceCheckRequest(BaseModel):
+    payment_reference: Optional[str] = None
+    payment_asset: Optional[str] = None
+    amount: Optional[str] = None
+    paid_endpoint: Optional[str] = None
+    expected_service_response: Optional[Dict[str, Any]] = None
+    actual_service_response: Optional[Dict[str, Any]] = None
+    delivery_status: Optional[str] = None
+    evidence_ids: List[str] = []
+    transaction_reference: Optional[str] = None
+    service_response_received: bool = False
+    payer_agent_id: Optional[str] = None
+    request_id: Optional[str] = None
+    task_id: Optional[str] = None
+
+
+class PaymentEvidenceCheckResponse(BaseModel):
+    payment_evidence_status: str
+    service_response_received: bool
+    payment_response_matched: bool
+    missing_items: List[str]
+    mismatch_items: List[str]
+    audit_ready: bool
+    requires_human_review: bool
+    recommended_next_step: str
+    request_id: Optional[str]
+    task_id: Optional[str]
+    created_at: str
+
+
 class RemediationVerifyRequest(BaseModel):
     remediation_id: str
     finding_id: Optional[str] = None
@@ -692,6 +779,64 @@ class RemediationVerifyResponse(BaseModel):
     request_id: Optional[str]
     task_id: Optional[str]
     created_at: str
+
+
+# ─────────────────────────────────────────────
+# JP Payment Evidence Guard v0.1 — rule-based logic
+# ─────────────────────────────────────────────
+
+def _pe_check_missing(req: PaymentEvidenceCheckRequest) -> List[str]:
+    missing = []
+    if not req.payment_reference:
+        missing.append("payment_reference")
+    if not req.payment_asset:
+        missing.append("payment_asset")
+    if not req.amount:
+        missing.append("amount")
+    if not req.paid_endpoint:
+        missing.append("paid_endpoint")
+    if not req.transaction_reference:
+        missing.append("transaction_reference")
+    if req.actual_service_response is None:
+        missing.append("actual_service_response")
+    if not req.evidence_ids:
+        missing.append("evidence_ids")
+    return missing
+
+
+def _pe_check_mismatch(req: PaymentEvidenceCheckRequest) -> List[str]:
+    mismatches = []
+    if not (req.expected_service_response and req.actual_service_response):
+        return mismatches
+    expected_status = req.expected_service_response.get("status")
+    actual_status = req.actual_service_response.get("status")
+    if expected_status and actual_status and expected_status != actual_status:
+        mismatches.append("service_response_status_mismatch")
+    for field in req.expected_service_response.get("required_fields", []):
+        if field not in req.actual_service_response:
+            mismatches.append(f"missing_required_field_{field}")
+    return mismatches
+
+
+def _pe_determine_status(
+    missing: List[str],
+    mismatches: List[str],
+    req: PaymentEvidenceCheckRequest,
+) -> str:
+    if mismatches:
+        return "mismatch"
+    if missing or not req.service_response_received:
+        return "incomplete"
+    return "ok"
+
+
+def _pe_recommended_next_step(status: str) -> str:
+    return {
+        "ok":              "store_evidence",
+        "incomplete":      "collect_missing_evidence",
+        "mismatch":        "review_mismatch",
+        "requires_review": "escalate_to_human",
+    }.get(status, "escalate_to_human")
 
 
 def _rv_evidence_status(req: RemediationVerifyRequest) -> str:
@@ -948,14 +1093,60 @@ async def verify_remediation(req: RemediationVerifyRequest):
     )
 
 
+# ─────────────────────────────────────────────
+# JP Payment Evidence Guard v0.1 — endpoint
+# ─────────────────────────────────────────────
+
+@app.post("/api/payment-evidence/check", response_model=PaymentEvidenceCheckResponse)
+async def check_payment_evidence(req: PaymentEvidenceCheckRequest, request: Request):
+    """
+    Verify that an AI-agent payment produced the expected service response and audit evidence.
+
+    v0.1: rule-based verification only.
+    Does not execute payments, act as a facilitator, make tax or legal decisions,
+    guarantee output correctness, or store confidential content.
+    Stateless — no database writes.
+    """
+    if not TEST_MODE:
+        payment_header = (
+            request.headers.get("PAYMENT-SIGNATURE") or request.headers.get("X-PAYMENT")
+        )
+        is_valid = await payment_verifier.verify_payment(payment_header, WALLET_ADDRESS, "0.03")
+        if not is_valid:
+            raise HTTPException(status_code=402, detail="Payment verification failed")
+
+    missing = _pe_check_missing(req)
+    mismatches = _pe_check_mismatch(req)
+    status = _pe_determine_status(missing, mismatches, req)
+    payment_response_matched = (len(mismatches) == 0 and req.service_response_received)
+    audit_ready = (status == "ok")
+    requires_human_review = (status != "ok")
+    recommended_next_step = _pe_recommended_next_step(status)
+
+    return PaymentEvidenceCheckResponse(
+        payment_evidence_status=status,
+        service_response_received=req.service_response_received,
+        payment_response_matched=payment_response_matched,
+        missing_items=missing,
+        mismatch_items=mismatches,
+        audit_ready=audit_ready,
+        requires_human_review=requires_human_review,
+        recommended_next_step=recommended_next_step,
+        request_id=req.request_id,
+        task_id=req.task_id,
+        created_at=datetime.now(timezone.utc).isoformat(),
+    )
+
+
 @app.get("/")
 async def root():
     return {
         "name": "Agent Approval Unit Builder API",
         "version": "0.1.0",
         "endpoints": {
-            "POST /api/approval-unit/build": "Build an Approval Unit (human decision contract)",
-            "POST /api/remediation/verify": "Verify AI remediation before approval (free)",
+            "POST /api/approval-unit/build":    "Build an Approval Unit (human decision contract) — 0.05 USDC",
+            "POST /api/remediation/verify":     "Verify AI remediation before approval (free)",
+            "POST /api/payment-evidence/check": "Verify payment evidence and audit readiness — 0.03 USDC",
         },
         "note": "v0.1 is build-only. No approval execution, blockchain, or payments.",
         "core_concept": "Approval Unit = Human Decision Contract",
@@ -998,7 +1189,24 @@ async def x402_discovery_manifest():
                     }
                 ],
                 "extensions": _BAZAAR_EXTENSIONS,
-            }
+            },
+            {
+                "x402Version": 2,
+                "type": "http",
+                "resource": f"{base_url}/api/payment-evidence/check",
+                "accepts": [
+                    {
+                        "scheme": "exact",
+                        "network": "eip155:8453",
+                        "amount": str(round(0.03 * 1_000_000)),
+                        "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                        "payTo": WALLET_ADDRESS,
+                        "maxTimeoutSeconds": 300,
+                        "extra": {"name": "USD Coin", "version": "2"},
+                    }
+                ],
+                "extensions": _BAZAAR_EXTENSIONS_EVIDENCE,
+            },
         ],
     }
 
@@ -1023,8 +1231,9 @@ v0.1 is build-only. No approval execution, blockchain transactions, or payments.
 
 ## Endpoints
 
-POST /api/approval-unit/build — Build a human decision contract (0.05 USDC)
-POST /api/remediation/verify — Verify AI remediation before approval (free)
+POST /api/approval-unit/build    — Build a human decision contract (0.05 USDC)
+POST /api/remediation/verify     — Verify AI remediation before approval (free)
+POST /api/payment-evidence/check — Verify payment evidence and audit readiness (0.03 USDC)
 
 ## Additional Resources
 
@@ -1035,8 +1244,9 @@ x402 Discovery: https://ai-agent-payment-safety-stack.onrender.com/.well-known/x
 
 ## Pricing
 
-approval-unit/build: 0.05 USDC per call
-remediation/verify: Free
+approval-unit/build:    0.05 USDC per call
+remediation/verify:     Free
+payment-evidence/check: 0.03 USDC per call
 
 ## Payment
 
@@ -1046,6 +1256,7 @@ USDC payments to 0x60c402878EfcEcAe5733A88075328Aa2320C39BE
 ## Recommended Flow
 
 POST /api/remediation/verify (free) → POST /api/approval-unit/build (0.05 USDC)
+payment execution → POST /api/payment-evidence/check (0.03 USDC) → store evidence
 
 ## Use Cases
 
@@ -1054,6 +1265,35 @@ POST /api/remediation/verify (free) → POST /api/approval-unit/build (0.05 USDC
 - Deployment proposal approval
 - Memory write approval
 - Tool execution approval
+- Post-payment evidence verification (JP compliance, x402/JPYC/USDC)
+
+## Live JP Payment Evidence Guard API
+
+Endpoint:
+https://ai-agent-payment-safety-stack.onrender.com/api/payment-evidence/check
+
+Price:
+0.03 USDC / check
+
+Use this API after completing a payment via x402, JPYC, or USDC, and after receiving the service response.
+Verifies that the payment and service response correspond, and classifies audit readiness.
+
+Does NOT:
+- execute payments
+- act as a facilitator
+- make legal or tax decisions
+- guarantee output correctness
+- store confidential content
+
+Output:
+- payment_evidence_status: ok / incomplete / mismatch / requires_review
+- payment_response_matched: true if payment and response correspond
+- service_response_received: true if service responded
+- missing_items: list of missing evidence fields
+- mismatch_items: list of mismatched fields
+- audit_ready: true if evidence is complete and matched
+- requires_human_review: true if human review is needed
+- recommended_next_step: store_evidence / collect_missing_evidence / review_mismatch / escalate_to_human
 
 ## Direct AtoA Usage
 
@@ -1221,6 +1461,15 @@ async def agent_json():
                     "currency": "free",
                 },
             },
+            {
+                "method": "POST",
+                "path": "/api/payment-evidence/check",
+                "description": "Verify that an AI-agent payment produced the expected service response and audit evidence",
+                "pricing": {
+                    "amount": "0.03",
+                    "currency": "USDC",
+                },
+            },
         ],
         "payment": {
             "scheme": "x402",
@@ -1250,7 +1499,9 @@ async def agent_json():
             "human_approval_boundary",
             "ai_generated_remediation_review",
             "x402_payment_governance",
-            "a2a_workflow_guard"
+            "a2a_workflow_guard",
+            "post_payment_evidence_verification",
+            "jp_compliance_audit_readiness",
         ],
         "constraints": {
             "build_only": True,

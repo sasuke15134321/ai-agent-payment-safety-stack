@@ -235,3 +235,102 @@ Human Approver
   ↓
 Audit Log / Agent Memory
 ```
+
+---
+
+# Skill: JP Payment Evidence Guard
+
+## Purpose
+
+Use this skill to verify that an AI-agent payment (x402/JPYC/USDC) produced the expected service response and maintains audit-ready evidence.
+
+v0.1 is verification-only. No payment execution, facilitation, legal or tax decisions.
+
+## When to use
+
+Use this skill when:
+- a payment via x402, JPYC, or USDC has been executed
+- a service response has been received
+- you need to confirm the payment and response correspond
+- you need to classify evidence as audit-ready before storing or passing to next agent
+- Japanese compliance audit trail is required
+
+## When not to use
+
+Do not use this skill to:
+- authorize or execute payments (use agent-budget-guard instead)
+- make legal compliance decisions
+- make tax decisions
+- validate invoice correctness
+- guarantee service output quality
+- replace human review in high-risk domains
+
+## Live endpoint
+
+POST https://ai-agent-payment-safety-stack.onrender.com/api/payment-evidence/check
+
+## Pricing
+
+0.03 USDC / call
+
+## Minimum required inputs
+
+- `payment_reference` — unique reference for the payment
+- `payment_asset` — asset used (USDC / JPYC / JPY)
+- `amount` — payment amount as string
+- `paid_endpoint` — the API endpoint that was paid for
+- `transaction_reference` — on-chain or protocol transaction reference
+- `service_response_received` — whether the service responded (boolean)
+- `actual_service_response` — the response received from the service
+
+## Optional inputs
+
+- `expected_service_response` — expected status and required fields for mismatch detection
+- `delivery_status` — delivered / failed / pending
+- `evidence_ids` — list of existing evidence IDs
+- `payer_agent_id` — ID of the paying agent
+- `request_id` / `task_id` — for traceability
+
+## Output
+
+The API returns a Payment Evidence Check Result:
+- `payment_evidence_status` — ok / incomplete / mismatch / requires_review
+- `payment_response_matched` — true if payment and response correspond without mismatch
+- `service_response_received` — echoed from input
+- `missing_items` — list of missing required fields
+- `mismatch_items` — list of fields where expected and actual diverge
+- `audit_ready` — true only when status is ok
+- `requires_human_review` — true for incomplete / mismatch / requires_review
+- `recommended_next_step` — store_evidence / collect_missing_evidence / review_mismatch / escalate_to_human
+
+## Status values
+
+| Status | Meaning |
+|---|---|
+| ok | All fields present, response received, no mismatch |
+| incomplete | One or more required fields missing or service_response_received = false |
+| mismatch | Expected and actual service response differ |
+| requires_review | High risk or undecidable — escalate to human |
+
+## v0.1 constraints
+
+- Rule-based verification only. No LLM-generated output.
+- No payment execution.
+- Not a payment facilitator.
+- No tax or legal decisions.
+- No invoice correctness guarantee.
+- No service quality guarantee.
+- Stateless — no database writes.
+- Does not store confidential content.
+
+## Safety chain position
+
+```
+Payment execution (x402 / JPYC / USDC)
+  ↓
+JP Payment Evidence Guard  ← this skill
+  ↓ (if audit_ready = true)
+Agent Memory API (evidence storage)
+  ↓
+JP Monthly Evidence Pack (monthly audit bundle)
+```
