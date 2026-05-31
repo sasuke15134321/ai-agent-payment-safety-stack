@@ -1377,6 +1377,38 @@ async def root():
         },
         "note": "v0.1 is build-only. No approval execution, blockchain, or payments.",
         "core_concept": "Approval Unit = Human Decision Contract",
+        "jp_local_agent_payment_control_pack_v1": {
+            "name": "JP Local Agent Payment Control Pack v1.0",
+            "description": "3 Live APIs for Japanese AI agent payment governance (pre-payment + post-payment).",
+            "call_sequence": "Metadata Sanitizer → Counterparty / Invoice Check → Payment → Payment Evidence Guard",
+            "total_price": "0.10 USDC / transaction",
+            "apis": [
+                {
+                    "name": "JP Metadata Sanitizer",
+                    "endpoint": "POST /api/security/metadata-sanitize",
+                    "service_url": "https://agent-security-gateway.onrender.com",
+                    "price": "0.05 USDC / scan",
+                    "role": "Scan payment metadata for PII, credentials, invoice/contract identifiers, and suspicious instructions before payment metadata transmission.",
+                    "when": "pre-payment (before sending metadata to payment rail)",
+                },
+                {
+                    "name": "JP Counterparty / Invoice Check",
+                    "endpoint": "POST /api/counterparty-invoice/check",
+                    "service_url": "https://ai-agent-payment-safety-stack.onrender.com",
+                    "price": "0.02 USDC / check",
+                    "role": "Verify counterparty name, invoice registration number, corporate number format, and wallet format before payment.",
+                    "when": "pre-payment (before payment execution)",
+                },
+                {
+                    "name": "JP Payment Evidence Guard",
+                    "endpoint": "POST /api/payment-evidence/check",
+                    "service_url": "https://ai-agent-payment-safety-stack.onrender.com",
+                    "price": "0.03 USDC / check",
+                    "role": "Verify payment, API response, deliverable, and audit evidence after payment.",
+                    "when": "post-payment (after payment execution)",
+                },
+            ],
+        },
     }
 
 
