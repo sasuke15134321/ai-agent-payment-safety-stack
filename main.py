@@ -55,8 +55,9 @@ app.add_middleware(
 
 # x402 paid endpoint config
 _PAID_ENDPOINTS = {
-    ("POST", "/api/approval-unit/build"):    "0.05",
-    ("POST", "/api/payment-evidence/check"): "0.03",
+    ("POST", "/api/approval-unit/build"):         "0.05",
+    ("POST", "/api/payment-evidence/check"):      "0.03",
+    ("POST", "/api/counterparty-invoice/check"):  "0.02",
 }
 
 _ENDPOINT_DESCRIPTIONS = {
@@ -66,6 +67,10 @@ _ENDPOINT_DESCRIPTIONS = {
     ),
     "/api/payment-evidence/check": (
         "Verify that an AI-agent payment produced the expected service response and audit evidence."
+    ),
+    "/api/counterparty-invoice/check": (
+        "Verify counterparty name, invoice registration number, and corporate number "
+        "before AI-agent payment. Format check and name match only. No tax or legal advice."
     ),
 }
 
@@ -153,6 +158,55 @@ _BAZAAR_EXTENSIONS_EVIDENCE = {
 }
 
 
+# CDP Bazaar indexing extension for counterparty-invoice/check
+_BAZAAR_EXTENSIONS_COUNTERPARTY = {
+    "bazaar": {
+        "discoverable": True,
+        "info": {
+            "input": {
+                "type": "http",
+                "method": "POST",
+                "bodyType": "json",
+                "body": {
+                    "counterparty_name": "Example Vendor Inc.",
+                    "invoice_registration_number": "T1234567890123",
+                    "corporate_number": "1234567890123",
+                    "wallet_address": "0x0000000000000000000000000000000000000000",
+                    "api_provider_name": "Example Vendor Inc.",
+                    "payment_purpose": "AI API usage fee",
+                    "payment_asset": "USDC",
+                    "amount": "0.02",
+                },
+            },
+            "output": {
+                "type": "json",
+                "example": {
+                    "counterparty_check_status": "ok",
+                    "invoice_number_format_valid": True,
+                    "corporate_number_format_valid": True,
+                    "name_match_status": "match",
+                    "wallet_match_status": "format_valid",
+                    "requires_human_review": False,
+                    "recommended_next_step": "proceed_to_payment",
+                },
+            },
+        },
+        "schema": {
+            "type": "object",
+            "properties": {
+                "counterparty_check_status": {"type": "string"},
+                "invoice_number_format_valid": {"type": "boolean"},
+                "corporate_number_format_valid": {"type": "boolean"},
+                "name_match_status": {"type": "string"},
+                "wallet_match_status": {"type": "string"},
+                "requires_human_review": {"type": "boolean"},
+                "recommended_next_step": {"type": "string"},
+            },
+        },
+    }
+}
+
+
 @app.middleware("http")
 async def x402_payment_middleware(request: Request, call_next):
     method = request.method
@@ -195,6 +249,11 @@ async def x402_payment_middleware(request: Request, call_next):
                 _pc["extensions"] = _BAZAAR_EXTENSIONS_EVIDENCE
                 _pc["payment_evidence_status"] = None
                 _pc["audit_ready"] = False
+                _pc["next_recommended"] = "complete_x402_payment"
+            elif path == "/api/counterparty-invoice/check":
+                _pc["extensions"] = _BAZAAR_EXTENSIONS_COUNTERPARTY
+                _pc["counterparty_check_status"] = None
+                _pc["requires_human_review"] = True
                 _pc["next_recommended"] = "complete_x402_payment"
             return JSONResponse(
                 status_code=402,
@@ -710,6 +769,38 @@ class PaymentEvidenceCheckResponse(BaseModel):
     created_at: str
 
 
+class CounterpartyInvoiceCheckRequest(BaseModel):
+    counterparty_name: str
+    invoice_registration_number: Optional[str] = None
+    corporate_number: Optional[str] = None
+    wallet_address: Optional[str] = None
+    api_provider_name: Optional[str] = None
+    payment_purpose: Optional[str] = None
+    declared_invoice_status: Optional[str] = None
+    billing_country: Optional[str] = None
+    payment_asset: Optional[str] = None
+    amount: Optional[str] = None
+    transaction_reference: Optional[str] = None
+    evidence_ids: List[str] = []
+    request_id: Optional[str] = None
+    task_id: Optional[str] = None
+
+
+class CounterpartyInvoiceCheckResponse(BaseModel):
+    counterparty_check_status: str
+    invoice_number_format_valid: bool
+    corporate_number_format_valid: bool
+    name_match_status: str
+    wallet_match_status: str
+    requires_human_review: bool
+    recommended_next_step: str
+    missing_items: List[str]
+    audit_ready: bool
+    request_id: Optional[str]
+    task_id: Optional[str]
+    created_at: str
+
+
 class RemediationVerifyRequest(BaseModel):
     remediation_id: str
     finding_id: Optional[str] = None
@@ -836,6 +927,91 @@ def _pe_recommended_next_step(status: str) -> str:
         "incomplete":      "collect_missing_evidence",
         "mismatch":        "review_mismatch",
         "requires_review": "escalate_to_human",
+    }.get(status, "escalate_to_human")
+
+
+# ─────────────────────────────────────────────
+# JP Counterparty / Invoice Check v0.1 — rule-based logic
+# ─────────────────────────────────────────────
+
+import re as _re
+
+
+def _ci_check_invoice_format(invoice_number: Optional[str]) -> bool:
+    """T + 13桁数字の形式確認のみ。リアルタイム照合なし。"""
+    if not invoice_number:
+        return False
+    return bool(_re.match(r"^T\d{13}$", invoice_number))
+
+
+def _ci_check_corporate_format(corporate_number: Optional[str]) -> bool:
+    """13桁数字の形式確認のみ。リアルタイム照合なし。"""
+    if not corporate_number:
+        return False
+    return bool(_re.match(r"^\d{13}$", corporate_number))
+
+
+def _ci_check_name_match(counterparty_name: str, api_provider_name: Optional[str]) -> str:
+    """文字列比較のみ。外部照合なし。"""
+    if not api_provider_name:
+        return "not_provided"
+    if counterparty_name == api_provider_name:
+        return "match"
+    if (counterparty_name.lower() in api_provider_name.lower()
+            or api_provider_name.lower() in counterparty_name.lower()):
+        return "partial_match"
+    return "no_match"
+
+
+def _ci_check_wallet(wallet_address: Optional[str]) -> str:
+    """EVM アドレス形式確認のみ。オンチェーン照合なし。"""
+    if not wallet_address:
+        return "not_provided"
+    if _re.match(r"^0x[0-9a-fA-F]{40}$", wallet_address):
+        return "format_valid"
+    return "format_invalid"
+
+
+def _ci_check_missing(req: CounterpartyInvoiceCheckRequest) -> List[str]:
+    missing = []
+    if not req.invoice_registration_number:
+        missing.append("invoice_registration_number")
+    if not req.corporate_number:
+        missing.append("corporate_number")
+    if not req.api_provider_name:
+        missing.append("api_provider_name")
+    if not req.payment_purpose:
+        missing.append("payment_purpose")
+    return missing
+
+
+def _ci_determine_status(
+    invoice_valid: bool,
+    corporate_valid: bool,
+    name_match: str,
+    wallet_match: str,
+    missing: List[str],
+) -> str:
+    """counterparty_check_status の判定。"""
+    format_errors = sum([
+        not invoice_valid,
+        not corporate_valid,
+        wallet_match == "format_invalid",
+    ])
+    if format_errors >= 2:
+        return "invalid"
+    if name_match == "no_match":
+        return "requires_review"
+    if not invoice_valid or not corporate_valid or missing or name_match in ("partial_match", "not_provided"):
+        return "requires_review"
+    return "ok"
+
+
+def _ci_recommended_next_step(status: str) -> str:
+    return {
+        "ok":              "proceed_to_payment",
+        "requires_review": "verify_counterparty_before_payment",
+        "invalid":         "block_and_escalate",
     }.get(status, "escalate_to_human")
 
 
@@ -1138,15 +1314,66 @@ async def check_payment_evidence(req: PaymentEvidenceCheckRequest, request: Requ
     )
 
 
+# ─────────────────────────────────────────────
+# JP Counterparty / Invoice Check v0.1 — endpoint
+# ─────────────────────────────────────────────
+
+@app.post("/api/counterparty-invoice/check", response_model=CounterpartyInvoiceCheckResponse)
+async def check_counterparty_invoice(req: CounterpartyInvoiceCheckRequest, request: Request):
+    """
+    Verify counterparty name, invoice registration number, and corporate number
+    before AI-agent payment execution.
+
+    v0.1: format check and name match only. No external API calls.
+    Does not provide tax or legal advice.
+    Does not determine eligibility for input tax credit (仕入税額控除).
+    Does not perform credit checks on counterparties.
+    Stateless — no database writes.
+    """
+    if not TEST_MODE:
+        payment_header = (
+            request.headers.get("PAYMENT-SIGNATURE") or request.headers.get("X-PAYMENT")
+        )
+        is_valid = await payment_verifier.verify_payment(payment_header, WALLET_ADDRESS, "0.02")
+        if not is_valid:
+            raise HTTPException(status_code=402, detail="Payment verification failed")
+
+    invoice_valid = _ci_check_invoice_format(req.invoice_registration_number)
+    corporate_valid = _ci_check_corporate_format(req.corporate_number)
+    name_match = _ci_check_name_match(req.counterparty_name, req.api_provider_name)
+    wallet_match = _ci_check_wallet(req.wallet_address)
+    missing = _ci_check_missing(req)
+    status = _ci_determine_status(invoice_valid, corporate_valid, name_match, wallet_match, missing)
+    requires_human_review = (status != "ok")
+    audit_ready = (status == "ok")
+    recommended_next_step = _ci_recommended_next_step(status)
+
+    return CounterpartyInvoiceCheckResponse(
+        counterparty_check_status=status,
+        invoice_number_format_valid=invoice_valid,
+        corporate_number_format_valid=corporate_valid,
+        name_match_status=name_match,
+        wallet_match_status=wallet_match,
+        requires_human_review=requires_human_review,
+        recommended_next_step=recommended_next_step,
+        missing_items=missing,
+        audit_ready=audit_ready,
+        request_id=req.request_id,
+        task_id=req.task_id,
+        created_at=datetime.now(timezone.utc).isoformat(),
+    )
+
+
 @app.get("/")
 async def root():
     return {
         "name": "Agent Approval Unit Builder API",
         "version": "0.1.0",
         "endpoints": {
-            "POST /api/approval-unit/build":    "Build an Approval Unit (human decision contract) — 0.05 USDC",
-            "POST /api/remediation/verify":     "Verify AI remediation before approval (free)",
-            "POST /api/payment-evidence/check": "Verify payment evidence and audit readiness — 0.03 USDC",
+            "POST /api/approval-unit/build":        "Build an Approval Unit (human decision contract) — 0.05 USDC",
+            "POST /api/remediation/verify":         "Verify AI remediation before approval (free)",
+            "POST /api/payment-evidence/check":     "Verify payment evidence and audit readiness — 0.03 USDC",
+            "POST /api/counterparty-invoice/check": "Verify counterparty and invoice info before payment — 0.02 USDC",
         },
         "note": "v0.1 is build-only. No approval execution, blockchain, or payments.",
         "core_concept": "Approval Unit = Human Decision Contract",
@@ -1207,6 +1434,23 @@ async def x402_discovery_manifest():
                 ],
                 "extensions": _BAZAAR_EXTENSIONS_EVIDENCE,
             },
+            {
+                "x402Version": 2,
+                "type": "http",
+                "resource": f"{base_url}/api/counterparty-invoice/check",
+                "accepts": [
+                    {
+                        "scheme": "exact",
+                        "network": "eip155:8453",
+                        "amount": str(round(0.02 * 1_000_000)),
+                        "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                        "payTo": WALLET_ADDRESS,
+                        "maxTimeoutSeconds": 300,
+                        "extra": {"name": "USD Coin", "version": "2"},
+                    }
+                ],
+                "extensions": _BAZAAR_EXTENSIONS_COUNTERPARTY,
+            },
         ],
     }
 
@@ -1231,9 +1475,10 @@ v0.1 is build-only. No approval execution, blockchain transactions, or payments.
 
 ## Endpoints
 
-POST /api/approval-unit/build    — Build a human decision contract (0.05 USDC)
-POST /api/remediation/verify     — Verify AI remediation before approval (free)
-POST /api/payment-evidence/check — Verify payment evidence and audit readiness (0.03 USDC)
+POST /api/approval-unit/build        — Build a human decision contract (0.05 USDC)
+POST /api/remediation/verify         — Verify AI remediation before approval (free)
+POST /api/payment-evidence/check     — Verify payment evidence and audit readiness (0.03 USDC)
+POST /api/counterparty-invoice/check — Verify counterparty and invoice info before payment (0.02 USDC)
 
 ## Additional Resources
 
@@ -1244,9 +1489,10 @@ x402 Discovery: https://ai-agent-payment-safety-stack.onrender.com/.well-known/x
 
 ## Pricing
 
-approval-unit/build:    0.05 USDC per call
-remediation/verify:     Free
-payment-evidence/check: 0.03 USDC per call
+approval-unit/build:        0.05 USDC per call
+remediation/verify:         Free
+payment-evidence/check:     0.03 USDC per call
+counterparty-invoice/check: 0.02 USDC per call
 
 ## Payment
 
@@ -1255,6 +1501,7 @@ USDC payments to 0x60c402878EfcEcAe5733A88075328Aa2320C39BE
 
 ## Recommended Flow
 
+POST /api/counterparty-invoice/check (0.02 USDC) → POST /api/approval-unit/build (0.05 USDC)
 POST /api/remediation/verify (free) → POST /api/approval-unit/build (0.05 USDC)
 payment execution → POST /api/payment-evidence/check (0.03 USDC) → store evidence
 
@@ -1294,6 +1541,37 @@ Output:
 - audit_ready: true if evidence is complete and matched
 - requires_human_review: true if human review is needed
 - recommended_next_step: store_evidence / collect_missing_evidence / review_mismatch / escalate_to_human
+
+## Live JP Counterparty / Invoice Check API
+
+Endpoint:
+https://ai-agent-payment-safety-stack.onrender.com/api/counterparty-invoice/check
+
+Price:
+0.02 USDC / check
+
+Use this API before initiating a payment to a JP counterparty.
+Verifies invoice registration number format, corporate number format, counterparty name match,
+and wallet address format. Format check and local match only.
+
+Does NOT:
+- connect to National Tax Agency API (国税庁API)
+- connect to corporate number API (法人番号API)
+- provide tax or legal advice
+- determine eligibility for input tax credit (仕入税額控除)
+- perform credit checks on counterparties
+- guarantee invoice validity or completeness
+
+Output:
+- counterparty_check_status: ok / requires_review / invalid
+- invoice_number_format_valid: true if T + 13 digits
+- corporate_number_format_valid: true if 13 digits
+- name_match_status: match / partial_match / no_match / not_provided
+- wallet_match_status: format_valid / format_invalid / not_provided
+- requires_human_review: true unless all checks pass
+- recommended_next_step: proceed_to_payment / verify_counterparty_before_payment / block_and_escalate
+- missing_items: list of missing fields
+- audit_ready: true only when status is ok
 
 ## Direct AtoA Usage
 
@@ -1752,6 +2030,108 @@ Agent Memory API (evidence storage)
   ↓
 JP Monthly Evidence Pack (monthly audit bundle)
 ```
+
+---
+
+# Skill: JP Counterparty / Invoice Check
+
+## Purpose
+
+Use this skill to verify counterparty name, invoice registration number, corporate number,
+and wallet address format before initiating a payment to a JP counterparty.
+
+v0.1 is format check and local match only. No external API calls.
+
+## When to use
+
+Use this skill when:
+- about to send a payment to a JP counterparty via x402, JPYC, or USDC
+- the counterparty provides an invoice registration number (T + 13 digits)
+- the counterparty provides a corporate number (13 digits)
+- you need to check that counterparty_name and api_provider_name match
+- you need to verify wallet address format (EVM 0x + 40 hex)
+- you need to determine if human review is required before payment
+
+## When not to use
+
+Do not use this skill to:
+- verify real-time invoice registration status with National Tax Agency
+- check corporate number against government registry
+- determine eligibility for input tax credit (仕入税額控除)
+- perform credit checks on counterparties
+- make tax or legal decisions
+- guarantee invoice completeness
+
+## Live endpoint
+
+POST https://ai-agent-payment-safety-stack.onrender.com/api/counterparty-invoice/check
+
+## Pricing
+
+0.02 USDC / call
+
+## Required inputs
+
+- `counterparty_name` — name of the counterparty
+
+## Recommended inputs
+
+- `invoice_registration_number` — JP invoice registration number (T + 13 digits)
+- `corporate_number` — JP corporate number (13 digits)
+- `api_provider_name` — name used by the API provider or billing entity
+- `payment_purpose` — purpose of the payment
+- `wallet_address` — EVM wallet address (optional)
+- `declared_invoice_status` — declared status (registered / not_registered / unknown)
+- `billing_country` — billing country (JP for Japan)
+- `payment_asset` — asset to be used (USDC / JPYC)
+- `amount` — payment amount as string
+- `request_id` / `task_id` — for traceability
+
+## Output
+
+The API returns a Counterparty Invoice Check Result:
+- `counterparty_check_status` — ok / requires_review / invalid
+- `invoice_number_format_valid` — true if T + 13 digits
+- `corporate_number_format_valid` — true if 13 digits
+- `name_match_status` — match / partial_match / no_match / not_provided
+- `wallet_match_status` — format_valid / format_invalid / not_provided
+- `requires_human_review` — true unless all checks pass
+- `recommended_next_step` — proceed_to_payment / verify_counterparty_before_payment / block_and_escalate
+- `missing_items` — list of missing recommended fields
+- `audit_ready` — true only when status is ok
+
+## Status values
+
+| Status | Meaning |
+|---|---|
+| ok | All format checks pass, names match, no missing items |
+| requires_review | Some checks incomplete or partial match |
+| invalid | Two or more format errors detected |
+
+## v0.1 constraints
+
+- Format check and local match only. No external API calls.
+- No National Tax Agency API connection (国税庁API).
+- No corporate number API connection (法人番号API).
+- No tax or legal advice.
+- No input tax credit (仕入税額控除) determination.
+- No credit checks.
+- No invoice completeness guarantee.
+- Stateless — no database writes.
+
+## Safety chain position
+
+```
+Counterparty provides invoice and corporate info
+  ↓
+JP Counterparty / Invoice Check  ← this skill
+  ↓ (if counterparty_check_status = ok)
+Payment execution (x402 / JPYC / USDC)
+  ↓
+JP Payment Evidence Guard
+  ↓
+Agent Memory API (evidence storage)
+```
 """
     return PlainTextResponse(content)
 
@@ -1814,6 +2194,15 @@ async def agent_json():
                     "currency": "USDC",
                 },
             },
+            {
+                "method": "POST",
+                "path": "/api/counterparty-invoice/check",
+                "description": "Verify counterparty name, invoice registration number, and corporate number before AI-agent payment. Format check and name match only. No tax or legal advice.",
+                "pricing": {
+                    "amount": "0.02",
+                    "currency": "USDC",
+                },
+            },
         ],
         "payment": {
             "scheme": "x402",
@@ -1846,6 +2235,8 @@ async def agent_json():
             "a2a_workflow_guard",
             "post_payment_evidence_verification",
             "jp_compliance_audit_readiness",
+            "jp_counterparty_verification_before_payment",
+            "jp_invoice_format_check",
         ],
         "constraints": {
             "build_only": True,
