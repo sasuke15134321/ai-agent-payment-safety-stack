@@ -762,3 +762,29 @@ We provide lightweight safety, budget, approval, context, and audit primitives t
 日本語：
 Agent Control Primitives は、決済レール・ウォレット・カストディアン・x402ファシリテーターではありません。
 AIエージェントがツール実行・API利用・ステーブルコイン決済を行う前後に使う、軽量な安全確認・予算管理・承認・記録の部品を提供します。
+
+---
+
+## JP Local Agent Payment Control Pack v1.0
+
+3 Live APIs for Japanese AI agent payment governance.
+
+**Total: 0.10 USDC / transaction**
+
+| Step | API | Endpoint | Price | When |
+|------|-----|----------|-------|------|
+| 1 | JP Metadata Sanitizer | POST /api/security/metadata-sanitize | 0.05 USDC | pre-payment |
+| 2 | JP Counterparty / Invoice Check | POST /api/counterparty-invoice/check | 0.02 USDC | pre-payment |
+| 3 | JP Payment Evidence Guard | POST /api/payment-evidence/check | 0.03 USDC | post-payment |
+
+**Call order:**
+Metadata Sanitizer → Counterparty / Invoice Check → [Payment] → Payment Evidence Guard
+
+**JP Metadata Sanitizer** runs on https://agent-security-gateway.onrender.com
+**Counterparty / Invoice Check** and **Payment Evidence Guard** run on https://ai-agent-payment-safety-stack.onrender.com
+
+**What this pack does NOT do:**
+- No tax or legal advice
+- No credit check
+- No guarantee of invoice validity
+- No payment execution
