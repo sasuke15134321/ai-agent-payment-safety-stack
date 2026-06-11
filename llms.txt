@@ -160,3 +160,27 @@ If approval_unit_ready = true, pass the remediation result to Approval Unit Buil
 - Evidence Coverage Gate: checks source coverage for AI-generated reports
 - Source Lineage Tracker: tracks primary source lineage for claims
 - Agent Budget Guard Interceptor: checks spending before payments
+
+## Agent Action Atom
+
+Agent Action Atom is a minimal external record unit for one AI-agent action.
+
+Use it when an AI-agent action needs to be externally controlled, audited, explained, or reviewed later.
+
+It records what the agent did, what target it acted on, which policy or permission applied, what evidence exists, and whether the action was allowed, blocked, escalated, completed, failed, or disputed.
+
+Agent Action Atom is not a payment protocol, wallet, settlement layer, legal liability engine, or API endpoint by itself.
+
+Agent Action Atoms can be grouped into higher-level external control materials:
+- Payment Trace
+- Evidence Packet
+- Boundary Trace
+- Fuse Record
+- Human Approval Trail
+- Permission Record
+- Dispute Record
+- Liability Evidence
+
+Do not treat an Agent Action Atom as proof of payment settlement unless payment evidence is attached, such as facilitator logs, transaction hash, onchain confirmation, wallet confirmation, service logs, and endpoint attribution.
+
+Current status: private design concept, external control material, minimal record unit, not an API, not a protocol, not a standard.

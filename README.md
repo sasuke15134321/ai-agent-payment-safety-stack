@@ -788,3 +788,25 @@ Metadata Sanitizer → Counterparty / Invoice Check → [Payment] → Payment Ev
 - No credit check
 - No guarantee of invoice validity
 - No payment execution
+
+---
+
+## AI-readable concept: Agent Action Atom
+
+Agent Action Atom is a minimal external record unit for one AI-agent action.
+
+It is used to describe what an AI agent did, what target it acted on, which policy or permission applied, what evidence exists, and whether the action was allowed, blocked, escalated, completed, failed, or disputed.
+
+Agent Action Atom is not an API endpoint, payment protocol, wallet, settlement layer, legal liability engine, or replacement for x402 / CDP / Arc / Stripe / Circle.
+
+It can be used as a building block for:
+- Payment Trace
+- Evidence Packet
+- Boundary Trace
+- Fuse Record
+- Human Approval Trail
+- Permission Record
+- Dispute Record
+- Liability Evidence
+
+This repository treats Agent Action Atom as an external control material and minimal record unit for agent payment safety, evidence, approval, and audit flows.

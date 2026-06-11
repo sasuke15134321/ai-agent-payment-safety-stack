@@ -334,3 +334,71 @@ Agent Memory API (evidence storage)
   ↓
 JP Monthly Evidence Pack (monthly audit bundle)
 ```
+
+---
+
+## Skill: Agent Action Atom
+
+### Use this when
+
+Use Agent Action Atom when you need to describe, audit, or review one AI-agent action.
+
+Typical cases:
+- paid API call
+- x402 or stablecoin payment check
+- budget check before payment
+- external connector access
+- memory write
+- policy boundary check
+- fuse allow / block / escalate decision
+- human approval decision
+- evidence attachment for audit or dispute review
+
+### Do not use this as
+- a payment protocol
+- a wallet
+- a settlement layer
+- a legal liability engine
+- a compliance guarantee
+- an implemented API unless explicitly provided
+
+### Minimal record fields
+
+atom_id
+actor
+action
+target
+source
+policy
+meaning
+state
+proof
+time
+relation
+
+### Output purpose
+
+The purpose of an Agent Action Atom is to make one AI-agent action externally explainable and auditable.
+
+Agent Action Atoms may be grouped into:
+- Payment Trace
+- Evidence Packet
+- Boundary Trace
+- Fuse Record
+- Human Approval Trail
+- Permission Record
+- Dispute Record
+- Liability Evidence
+
+### Important rule
+
+Do not claim payment settlement from an Atom alone.
+
+Payment settlement requires attached evidence, such as:
+- facilitator verify log
+- facilitator settle log
+- transaction hash
+- onchain confirmation
+- wallet confirmation
+- service log
+- endpoint attribution
