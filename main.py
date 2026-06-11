@@ -41,7 +41,8 @@ app = FastAPI(
         "memory writes, tool execution requests, or decision-support outputs into minimal "
         "human decision contracts (Approval Units). "
         "Approval Unit = Human Decision Contract. "
-        "v0.1 is build-only: no approval execution, blockchain transactions, or payments."
+        "v0.1 is build-only: no approval execution, blockchain transactions, or payments. "
+        "Also includes AI-readable guidance for Agent Action Atom and Agent Payment Action Record to help describe, audit, and review AI-agent payment decisions."
     ),
 )
 
@@ -2196,7 +2197,8 @@ async def agent_json():
             "memory writes, tool execution requests, or decision-support outputs into minimal "
             "human decision contracts (Approval Units). "
             "Approval Unit = Human Decision Contract. "
-            "v0.1 is build-only: no approval execution, blockchain transactions, or payments."
+            "v0.1 is build-only: no approval execution, blockchain transactions, or payments. "
+            "Also includes AI-readable guidance for Agent Action Atom and Agent Payment Action Record to help describe, audit, and review AI-agent payment decisions."
         ),
         "endpoints": [
             {

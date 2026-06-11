@@ -10,6 +10,9 @@ info:
     Use POST /api/approval-unit/build to convert AI-generated candidates into
     minimal human-approvable decision units.
 
+    Also includes AI-readable guidance for Agent Action Atom and Agent Payment Action Record
+    to help describe, audit, and review AI-agent payment decisions.
+
 servers:
   - url: https://ai-agent-payment-safety-stack.onrender.com
     description: Production (Render)
