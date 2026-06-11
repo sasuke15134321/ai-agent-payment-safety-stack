@@ -184,3 +184,13 @@ Agent Action Atoms can be grouped into higher-level external control materials:
 Do not treat an Agent Action Atom as proof of payment settlement unless payment evidence is attached, such as facilitator logs, transaction hash, onchain confirmation, wallet confirmation, service logs, and endpoint attribution.
 
 Current status: private design concept, external control material, minimal record unit, not an API, not a protocol, not a standard.
+
+## Agent Payment Action Record
+
+Agent Payment Action Record is the first outward-facing use case of Agent Action Atom.
+
+It records one AI-agent payment action, including the external data that influenced it, the trust boundary involved, the checks applied, the decision made, and the evidence supporting the result.
+
+Use this concept when an AI agent may pay for a paid API, invoice, service, or counterparty after reading external data such as an API description, invoice memo, payment request, transaction note, email, PDF, metadata, or marketplace listing.
+
+This is a design concept and AI-readable guidance. It is not a new endpoint, protocol, wallet, settlement layer, or finalized schema.

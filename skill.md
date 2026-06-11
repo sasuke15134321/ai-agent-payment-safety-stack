@@ -402,3 +402,24 @@ Payment settlement requires attached evidence, such as:
 - wallet confirmation
 - service log
 - endpoint attribution
+
+## Skill: Agent Payment Action Record
+
+Use Agent Payment Action Record when reviewing or explaining an AI-agent payment decision.
+
+Typical cases:
+- an AI agent reads an API description before paying
+- an AI agent reads an invoice memo or payment request
+- an AI agent checks a counterparty before payment
+- an AI agent performs a budget check before payment
+- an AI agent verifies payment evidence after payment
+- an AI agent checks whether a paid service was fulfilled
+
+Record the following:
+record_id / agent_id / action_type / target / external_data_sources / trust_boundary / context_included / injection_risk_signal / policy_checked / decision / evidence / data_to_action_link / timestamp
+
+Important:
+injection_risk_signal is a risk indicator.
+It is not confirmation that an attack occurred or that injection succeeded.
+
+Agent Payment Action Record is not an implemented API unless explicitly provided.

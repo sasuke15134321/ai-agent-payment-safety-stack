@@ -810,3 +810,21 @@ It can be used as a building block for:
 - Liability Evidence
 
 This repository treats Agent Action Atom as an external control material and minimal record unit for agent payment safety, evidence, approval, and audit flows.
+
+## AI-readable use case: Agent Payment Action Record
+
+Agent Payment Action Record is a payment-focused use case of Agent Action Atom.
+
+It records what an AI agent attempted to pay for, which external data influenced the payment decision, what trust boundary was involved, which checks were applied, and what evidence supports the final result.
+
+It helps separate untrusted data from instructions and makes later outputs, tool calls, payments, and fulfillment auditable.
+
+In this repository, Agent Payment Action Record can be assembled from existing safety checks such as:
+
+- Counterparty Invoice Check
+- Security Gateway
+- Budget Guard
+- Payment Evidence Check
+- Result Fulfillment
+
+Agent Payment Action Record is not a payment protocol, wallet, settlement layer, legal liability engine, or replacement for x402 / CDP / Arc / Stripe / Circle.
