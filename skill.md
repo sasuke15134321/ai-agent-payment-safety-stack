@@ -461,3 +461,31 @@ injection_risk_signal is a risk indicator.
 It is not confirmation that an attack occurred or that injection succeeded.
 
 Agent Payment Action Record is not an implemented API unless explicitly provided.
+
+## Skill: Agent Payment Control Evidence Pack
+
+When to use:
+- before an AI agent pays for a paid API
+- before approving a counterparty or invoice
+- after a payment attempt, to verify evidence
+- when an external control record is needed
+
+Suggested sequence:
+1. Budget check
+2. Counterparty / invoice check
+3. Payment evidence check
+4. Agent Action Atom build
+
+Output goal:
+- payment decision trace
+- counterparty / invoice risk signal
+- payment evidence status
+- Agent Action Atom record
+- audit-ready external control record
+
+Non-goals:
+- not a wallet
+- not a settlement layer
+- not a payment protocol
+- not a legal audit system
+- not an official standard

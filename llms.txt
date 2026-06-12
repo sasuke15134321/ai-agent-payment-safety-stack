@@ -204,3 +204,17 @@ It records one AI-agent payment action, including the external data that influen
 Use this concept when an AI agent may pay for a paid API, invoice, service, or counterparty after reading external data such as an API description, invoice memo, payment request, transaction note, email, PDF, metadata, or marketplace listing.
 
 This is a design concept and AI-readable guidance. It is not a new endpoint, protocol, wallet, settlement layer, or finalized schema.
+
+## Agent Payment Control Evidence Pack
+
+Use this when an AI agent needs a composable control flow around paid API usage.
+
+Recommended flow:
+1. Check budget and spending policy with /api/budget/check
+2. Check counterparty, invoice text, payment description, or memo fields with /api/counterparty-invoice/check
+3. Check payment evidence with /api/payment-evidence/check
+4. Build an Agent Action Atom record with /api/action-atom/build
+
+The pack is designed for AI-agent payment control and evidence workflows.
+
+It is not a payment protocol, settlement layer, wallet, legal audit system, or official standard.

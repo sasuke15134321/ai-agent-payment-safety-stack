@@ -2394,6 +2394,33 @@ async def agent_json():
             "does_not_execute_payments_directly": True,
             "does_not_replace_human_review_in_high_risk_workflows": True
         },
+        "composable_use_cases": [
+            {
+                "name": "Agent Payment Control Evidence Pack",
+                "type": "composable_use_case",
+                "pricing": "uses_existing_endpoint_pricing",
+                "purpose": "Composable control and evidence flow for AI-agent payments.",
+                "endpoints": [
+                    "POST /api/budget/check",
+                    "POST /api/counterparty-invoice/check",
+                    "POST /api/payment-evidence/check",
+                    "POST /api/action-atom/build",
+                ],
+                "use_when": [
+                    "an AI agent needs to check payment permission before execution",
+                    "an AI agent needs to inspect counterparty or invoice text",
+                    "an AI agent needs to verify payment evidence after execution",
+                    "an AI agent needs to create an external control record",
+                ],
+                "non_goals": [
+                    "not a payment protocol",
+                    "not a settlement layer",
+                    "not a wallet",
+                    "not a legal audit system",
+                    "not an official standard",
+                ],
+            },
+        ],
         "metadata": {
             "a2a_compatible": True,
             "version": "0.1.0",

@@ -842,3 +842,30 @@ In this repository, Agent Payment Action Record can be assembled from existing s
 - Result Fulfillment
 
 Agent Payment Action Record is not a payment protocol, wallet, settlement layer, legal liability engine, or replacement for x402 / CDP / Arc / Stripe / Circle.
+
+## Agent Payment Control Evidence Pack
+
+Agent Payment Control Evidence Pack is a small composable API pack for AI agents that need to check payment permission, counterparty risk, payment evidence, and create an external control record before or after paid API usage.
+
+It combines existing endpoints:
+
+- POST /api/budget/check
+  - checks whether an AI-agent payment attempt is within budget, policy, and allowed spending boundaries
+
+- POST /api/counterparty-invoice/check
+  - checks invoice text, payment descriptions, counterparty claims, and memo fields before payment
+
+- POST /api/payment-evidence/check
+  - checks payment evidence after a payment attempt
+
+- POST /api/action-atom/build
+  - builds an experimental Agent Action Atom record containing intent, target, context state, checks, decision, evidence, and audit-readiness
+
+Use this pack when an AI agent needs to:
+- decide whether a payment should be allowed
+- inspect a counterparty or invoice before payment
+- verify payment evidence after execution
+- create an external control record for later review
+- separate agent intent, payment decision, evidence, and audit trace
+
+This is not a payment protocol, settlement layer, wallet, legal audit system, or official standard.
