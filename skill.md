@@ -403,6 +403,44 @@ Payment settlement requires attached evidence, such as:
 - service log
 - endpoint attribution
 
+## Skill: Agent Action Atom Builder — Live Endpoint
+
+### Endpoint
+
+POST /api/action-atom/build
+
+Free. Stateless. No DB storage.
+
+### What it does
+
+Converts one AI-agent action into a structured external control record (Agent Action Atom), including intent, target, context state, checks, decision, evidence, and audit-readiness.
+
+### When to use
+
+Use this when you need a structured, externally readable record of one AI-agent action.
+
+### Output
+
+Returns an Agent Action Atom JSON with:
+- atom_id (atom_<uuid>)
+- status: created
+- atom_type: agent_action_atom
+- experimental: true
+- general_purpose: true
+- hosted_as_first_use_case: ai-agent-payment-safety-stack
+- target (service + endpoint)
+- context_state, checks, decision, evidence
+- audit_ready (true if evidence + decision + context_state are all present)
+- non_goals: not a payment protocol, not a settlement layer, not a legal audit system, not an official standard
+
+### Important
+
+This is not a payment protocol, settlement layer, official standard, or legal audit system.
+
+Agent Action Atom is designed as a general-purpose external control record unit, currently hosted in ai-agent-payment-safety-stack as the first payment-related use case.
+
+It can be combined later into Agent Payment Action Records or Payment Control Evidence Packets.
+
 ## Skill: Agent Payment Action Record
 
 Use Agent Payment Action Record when reviewing or explaining an AI-agent payment decision.

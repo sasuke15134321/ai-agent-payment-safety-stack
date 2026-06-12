@@ -170,6 +170,61 @@ paths:
               schema:
                 $ref: '#/components/schemas/RemediationVerifyResponse'
 
+  /api/action-atom/build:
+    post:
+      summary: Build an Agent Action Atom record for one AI-agent action.
+      description: >
+        Converts one AI-agent action into a structured external control record
+        (Agent Action Atom), including intent, target, context state, checks,
+        decision, evidence, and audit-readiness.
+
+        This endpoint is stateless and stores no data.
+        It is currently hosted in ai-agent-payment-safety-stack as the first
+        payment-related use case, but Agent Action Atom is designed as a
+        general-purpose external control record unit.
+
+        It can be combined later into Agent Payment Action Records or
+        Payment Control Evidence Packets.
+
+        This is not a payment protocol, settlement layer, official standard,
+        or legal audit system.
+      operationId: buildActionAtom
+      tags:
+        - Agent Action Atom
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActionAtomBuildRequest'
+            example:
+              agent_id: agent_001
+              action_type: payment_decision
+              target_service: counterparty-invoice-check
+              target_endpoint: /api/counterparty-invoice/check
+              intent: Verify invoice before USDC payment
+              amount: "0.02"
+              context_state:
+                status: current
+                use_rule: Use as current operational state for this payment decision
+                evidence: CLAUDE.md / confirmed sales log
+                last_checked: "2026-06-12"
+              checks:
+                budget_check: passed
+                counterparty_check: passed
+                payment_evidence_check: passed
+              decision: proceed_with_payment
+              evidence:
+                source: counterparty-invoice-check response
+                status: confirmed
+      responses:
+        '200':
+          description: Agent Action Atom created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionAtomBuildResponse'
+
   /:
     get:
       summary: API root
@@ -643,3 +698,110 @@ components:
         created_at:
           type: string
           format: date-time
+    ActionAtomContextState:
+      type: object
+      required: [status, use_rule, evidence, last_checked]
+      properties:
+        status:
+          type: string
+        use_rule:
+          type: string
+        evidence:
+          type: string
+        last_checked:
+          type: string
+    ActionAtomChecks:
+      type: object
+      required: [budget_check, counterparty_check, payment_evidence_check]
+      properties:
+        budget_check:
+          type: string
+        counterparty_check:
+          type: string
+        payment_evidence_check:
+          type: string
+    ActionAtomEvidence:
+      type: object
+      required: [source, status]
+      properties:
+        source:
+          type: string
+        status:
+          type: string
+    ActionAtomBuildRequest:
+      type: object
+      required: [agent_id, action_type, target_service, target_endpoint, intent, context_state, checks, decision, evidence]
+      properties:
+        agent_id:
+          type: string
+        action_type:
+          type: string
+        target_service:
+          type: string
+        target_endpoint:
+          type: string
+        intent:
+          type: string
+        amount:
+          type: string
+          nullable: true
+        context_state:
+          $ref: '#/components/schemas/ActionAtomContextState'
+        checks:
+          $ref: '#/components/schemas/ActionAtomChecks'
+        decision:
+          type: string
+        evidence:
+          $ref: '#/components/schemas/ActionAtomEvidence'
+    ActionAtomBuildResponse:
+      type: object
+      properties:
+        atom_id:
+          type: string
+          description: "atom_<uuid>"
+        status:
+          type: string
+          description: "always 'created'"
+        atom_type:
+          type: string
+          description: "always 'agent_action_atom'"
+        experimental:
+          type: boolean
+        general_purpose:
+          type: boolean
+        hosted_as_first_use_case:
+          type: string
+        agent_id:
+          type: string
+        action_type:
+          type: string
+        target:
+          type: object
+          properties:
+            service:
+              type: string
+            endpoint:
+              type: string
+        intent:
+          type: string
+        amount:
+          type: string
+          nullable: true
+        context_state:
+          $ref: '#/components/schemas/ActionAtomContextState'
+        checks:
+          $ref: '#/components/schemas/ActionAtomChecks'
+        decision:
+          type: string
+        evidence:
+          $ref: '#/components/schemas/ActionAtomEvidence'
+        audit_ready:
+          type: boolean
+          description: "true if evidence, decision, and context_state are all present"
+        created_at:
+          type: string
+          format: date-time
+        non_goals:
+          type: array
+          items:
+            type: string

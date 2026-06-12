@@ -874,6 +874,62 @@ class RemediationVerifyResponse(BaseModel):
 
 
 # ─────────────────────────────────────────────
+# Agent Action Atom Builder — models
+# ─────────────────────────────────────────────
+
+class ActionAtomContextState(BaseModel):
+    status: str
+    use_rule: str
+    evidence: str
+    last_checked: str
+
+
+class ActionAtomChecks(BaseModel):
+    budget_check: str
+    counterparty_check: str
+    payment_evidence_check: str
+
+
+class ActionAtomEvidence(BaseModel):
+    source: str
+    status: str
+
+
+class ActionAtomBuildRequest(BaseModel):
+    agent_id: str
+    action_type: str
+    target_service: str
+    target_endpoint: str
+    intent: str
+    amount: Optional[str] = None
+    context_state: ActionAtomContextState
+    checks: ActionAtomChecks
+    decision: str
+    evidence: ActionAtomEvidence
+
+
+class ActionAtomBuildResponse(BaseModel):
+    atom_id: str
+    status: str
+    atom_type: str
+    experimental: bool
+    general_purpose: bool
+    hosted_as_first_use_case: str
+    agent_id: str
+    action_type: str
+    target: Dict[str, str]
+    intent: str
+    amount: Optional[str]
+    context_state: ActionAtomContextState
+    checks: ActionAtomChecks
+    decision: str
+    evidence: ActionAtomEvidence
+    audit_ready: bool
+    created_at: str
+    non_goals: List[str]
+
+
+# ─────────────────────────────────────────────
 # JP Payment Evidence Guard v0.1 — rule-based logic
 # ─────────────────────────────────────────────
 
@@ -1365,6 +1421,41 @@ async def check_counterparty_invoice(req: CounterpartyInvoiceCheckRequest, reque
     )
 
 
+@app.post("/api/action-atom/build", response_model=ActionAtomBuildResponse)
+async def build_action_atom(req: ActionAtomBuildRequest):
+    atom_id = f"atom_{uuid.uuid4()}"
+    audit_ready = bool(
+        req.evidence and req.evidence.source and req.evidence.status
+        and req.decision
+        and req.context_state and req.context_state.status
+    )
+    return ActionAtomBuildResponse(
+        atom_id=atom_id,
+        status="created",
+        atom_type="agent_action_atom",
+        experimental=True,
+        general_purpose=True,
+        hosted_as_first_use_case="ai-agent-payment-safety-stack",
+        agent_id=req.agent_id,
+        action_type=req.action_type,
+        target={"service": req.target_service, "endpoint": req.target_endpoint},
+        intent=req.intent,
+        amount=req.amount,
+        context_state=req.context_state,
+        checks=req.checks,
+        decision=req.decision,
+        evidence=req.evidence,
+        audit_ready=audit_ready,
+        created_at=datetime.now(timezone.utc).isoformat(),
+        non_goals=[
+            "not a payment protocol",
+            "not a settlement layer",
+            "not a legal audit system",
+            "not an official standard",
+        ],
+    )
+
+
 @app.get("/")
 async def root():
     return {
@@ -1375,6 +1466,7 @@ async def root():
             "POST /api/remediation/verify":         "Verify AI remediation before approval (free)",
             "POST /api/payment-evidence/check":     "Verify payment evidence and audit readiness — 0.03 USDC",
             "POST /api/counterparty-invoice/check": "Verify counterparty and invoice info before payment — 0.02 USDC",
+            "POST /api/action-atom/build":          "Build an Agent Action Atom record for one AI-agent action (free)",
         },
         "note": "v0.1 is build-only. No approval execution, blockchain, or payments.",
         "core_concept": "Approval Unit = Human Decision Contract",

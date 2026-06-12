@@ -811,6 +811,20 @@ It can be used as a building block for:
 
 This repository treats Agent Action Atom as an external control material and minimal record unit for agent payment safety, evidence, approval, and audit flows.
 
+## Agent Action Atom Builder — Live Endpoint
+
+Agent Action Atom is an experimental record builder for AI-agent actions.
+
+It converts one AI-agent action into a structured external control record, including intent, target, context state, checks, decision, evidence, and audit-readiness.
+
+This endpoint is currently hosted in ai-agent-payment-safety-stack as the first payment-related use case, but Agent Action Atom is designed as a general-purpose external control record unit.
+
+It can be combined later into Agent Payment Action Records or Payment Control Evidence Packets.
+
+This is not a payment protocol, settlement layer, official standard, or legal audit system.
+
+**Endpoint:** `POST /api/action-atom/build` (free, stateless, no DB storage)
+
 ## AI-readable use case: Agent Payment Action Record
 
 Agent Payment Action Record is a payment-focused use case of Agent Action Atom.
