@@ -270,6 +270,51 @@ paths:
               schema:
                 type: object
 
+  /api/payment-evidence-packet/build:
+    post:
+      summary: Build a Payment Control Evidence Packet.
+      description: >
+        Experimental stateless builder. Packages payment intent, checks, evidence,
+        Agent Action Atom, and Agent Payment Action Record into one external evidence packet.
+        Free. No x402 payment required.
+        Not a payment protocol, settlement layer, wallet, legal audit system, or official standard.
+      operationId: buildPaymentEvidencePacket
+      tags:
+        - Payment Control Evidence Packet
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - agent_id
+                - payment_intent
+                - context_state
+                - final_status
+              properties:
+                agent_id:
+                  type: string
+                payment_intent:
+                  type: object
+                checks:
+                  type: object
+                agent_action_atom:
+                  type: object
+                payment_action_record:
+                  type: object
+                context_state:
+                  type: object
+                final_status:
+                  type: string
+      responses:
+        '200':
+          description: Payment Control Evidence Packet created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+
   /:
     get:
       summary: API root

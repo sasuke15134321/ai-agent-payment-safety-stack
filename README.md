@@ -879,3 +879,13 @@ Use this when an AI agent needs to explain why a payment was allowed, rejected, 
 It is designed to work with the Agent Payment Control Evidence Pack.
 
 It is not a payment protocol, settlement layer, wallet, legal audit system, or official standard.
+
+## Payment Control Evidence Packet Builder
+
+Payment Control Evidence Packet Builder is an experimental stateless builder that packages payment intent, checks, evidence, Agent Action Atom, and Agent Payment Action Record into one external evidence packet.
+
+Use this when an AI agent, developer, or reviewer needs a single packet for reviewing payment permission, counterparty checks, payment evidence, and the action record behind a paid API usage flow.
+
+It works with Agent Payment Control Evidence Pack, Agent Action Atom Builder, and Agent Payment Action Record Builder.
+
+It is not a payment protocol, settlement layer, wallet, legal audit system, or official standard.

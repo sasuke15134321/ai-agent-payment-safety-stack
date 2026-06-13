@@ -1510,6 +1510,22 @@ async def build_action_atom(req: ActionAtomBuildRequest):
     )
 
 
+class EvidencePacketChecksInput(BaseModel):
+    budget_check: Optional[PrePaymentCheckItem] = None
+    counterparty_invoice_check: Optional[PrePaymentCheckItem] = None
+    payment_evidence_check: Optional[PostPaymentCheckItem] = None
+
+
+class PaymentEvidencePacketRequest(BaseModel):
+    agent_id: str
+    payment_intent: PaymentIntentInput
+    checks: Optional[EvidencePacketChecksInput] = None
+    agent_action_atom: Optional[AgentActionAtomInput] = None
+    payment_action_record: Optional[dict] = None
+    context_state: ContextStateInput
+    final_status: str
+
+
 @app.post("/api/payment-action-record/build")
 async def build_payment_action_record(req: PaymentActionRecordBuildRequest):
     record_id = f"payment_record_{uuid.uuid4()}"
@@ -1557,6 +1573,54 @@ async def build_payment_action_record(req: PaymentActionRecordBuildRequest):
     }
 
 
+@app.post("/api/payment-evidence-packet/build")
+async def build_payment_evidence_packet(req: PaymentEvidencePacketRequest):
+    packet_id = f"evidence_packet_{uuid.uuid4()}"
+    has_checks = bool(req.checks and (
+        req.checks.budget_check or
+        req.checks.counterparty_invoice_check or
+        req.checks.payment_evidence_check
+    ))
+    has_atom_or_record = bool(req.agent_action_atom or req.payment_action_record)
+    audit_ready = bool(
+        req.payment_intent and
+        has_checks and
+        has_atom_or_record and
+        req.final_status
+    )
+    return {
+        "packet_id": packet_id,
+        "packet_type": "payment_control_evidence_packet",
+        "status": "created",
+        "experimental": True,
+        "stateless": True,
+        "agent_id": req.agent_id,
+        "payment_intent": req.payment_intent.model_dump(),
+        "included_records": {
+            "agent_action_atom": req.agent_action_atom.model_dump() if req.agent_action_atom else {},
+            "payment_action_record": req.payment_action_record or {},
+        },
+        "checks": req.checks.model_dump() if req.checks else {},
+        "context_state": req.context_state.model_dump(),
+        "final_status": req.final_status,
+        "audit_ready": audit_ready,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "can_be_used_for": [
+            "payment decision review",
+            "agent payment evidence collection",
+            "post-payment verification",
+            "external control record packaging",
+        ],
+        "non_goals": [
+            "not a payment protocol",
+            "not a settlement layer",
+            "not a wallet",
+            "not a legal audit system",
+            "not an official standard",
+        ],
+    }
+
+
 @app.get("/")
 async def root():
     return {
@@ -1569,6 +1633,7 @@ async def root():
             "POST /api/counterparty-invoice/check":       "Verify counterparty and invoice info before payment — 0.02 USDC",
             "POST /api/action-atom/build":                "Build an Agent Action Atom record for one AI-agent action (free)",
             "POST /api/payment-action-record/build":      "Build an Agent Payment Action Record combining payment intent, checks, evidence, and atom (free, experimental)",
+            "POST /api/payment-evidence-packet/build":    "Package payment intent, checks, evidence, Agent Action Atom, and Agent Payment Action Record into one external evidence packet (free, experimental)",
         },
         "note": "v0.1 is build-only. No approval execution, blockchain, or payments.",
         "core_concept": "Approval Unit = Human Decision Contract",
@@ -2466,6 +2531,27 @@ async def agent_json():
                     "an AI agent needs to explain why a payment was allowed or rejected",
                     "an AI agent needs to combine budget, counterparty, payment evidence, and action atom records",
                     "a reviewer needs a single payment decision record",
+                ],
+                "non_goals": [
+                    "not a payment protocol",
+                    "not a settlement layer",
+                    "not a wallet",
+                    "not a legal audit system",
+                    "not an official standard",
+                ],
+            },
+            {
+                "name": "Payment Control Evidence Packet Builder",
+                "method": "POST",
+                "path": "/api/payment-evidence-packet/build",
+                "pricing": "free",
+                "x402_required": False,
+                "type": "experimental_stateless_builder",
+                "purpose": "Packages payment intent, checks, evidence, Agent Action Atom, and Agent Payment Action Record into one external evidence packet.",
+                "use_when": [
+                    "an AI agent needs to package payment control evidence",
+                    "a developer needs to collect payment decision records into one packet",
+                    "a reviewer needs a single evidence packet for paid API usage",
                 ],
                 "non_goals": [
                     "not a payment protocol",
