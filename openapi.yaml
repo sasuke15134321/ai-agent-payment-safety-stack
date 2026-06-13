@@ -225,6 +225,51 @@ paths:
               schema:
                 $ref: '#/components/schemas/ActionAtomBuildResponse'
 
+  /api/payment-action-record/build:
+    post:
+      summary: Build an Agent Payment Action Record.
+      description: >
+        Experimental stateless builder. Combines payment intent, pre-payment checks,
+        post-payment evidence, context state, decision, and Agent Action Atom into
+        one external control record. Free. No x402 payment required.
+        Not a payment protocol, settlement layer, wallet, legal audit system, or official standard.
+      operationId: buildPaymentActionRecord
+      tags:
+        - Agent Payment Action Record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - agent_id
+                - payment_intent
+                - decision
+                - context_state
+              properties:
+                agent_id:
+                  type: string
+                payment_intent:
+                  type: object
+                pre_payment_checks:
+                  type: object
+                post_payment_checks:
+                  type: object
+                agent_action_atom:
+                  type: object
+                decision:
+                  type: string
+                context_state:
+                  type: object
+      responses:
+        '200':
+          description: Agent Payment Action Record created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+
   /:
     get:
       summary: API root

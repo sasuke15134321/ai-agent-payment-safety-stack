@@ -489,3 +489,13 @@ Non-goals:
 - not a payment protocol
 - not a legal audit system
 - not an official standard
+
+## Skill: Agent Payment Action Record Builder
+
+Agent Payment Action Record Builder is an experimental stateless builder that combines payment intent, pre-payment checks, post-payment evidence, context state, decision, and Agent Action Atom into one external control record.
+
+Use this when an AI agent needs to explain why a payment was allowed, rejected, confirmed, or flagged.
+
+It is designed to work with the Agent Payment Control Evidence Pack.
+
+It is not a payment protocol, settlement layer, wallet, legal audit system, or official standard.

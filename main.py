@@ -930,6 +930,60 @@ class ActionAtomBuildResponse(BaseModel):
 
 
 # ─────────────────────────────────────────────
+# Agent Payment Action Record Builder — Pydantic models
+# ─────────────────────────────────────────────
+
+class PaymentIntentInput(BaseModel):
+    purpose: str
+    target_service: str
+    target_endpoint: str
+    amount: Optional[str] = None
+
+
+class PrePaymentCheckItem(BaseModel):
+    status: str
+    source: str
+
+
+class PrePaymentChecksInput(BaseModel):
+    budget_check: Optional[PrePaymentCheckItem] = None
+    counterparty_invoice_check: Optional[PrePaymentCheckItem] = None
+
+
+class PostPaymentCheckItem(BaseModel):
+    status: str
+    source: str
+    txHash: Optional[str] = None
+
+
+class PostPaymentChecksInput(BaseModel):
+    payment_evidence_check: Optional[PostPaymentCheckItem] = None
+
+
+class AgentActionAtomInput(BaseModel):
+    atom_id: Optional[str] = None
+    status: Optional[str] = None
+    audit_ready: Optional[bool] = None
+
+
+class ContextStateInput(BaseModel):
+    status: str
+    use_rule: str
+    evidence: str
+    last_checked: str
+
+
+class PaymentActionRecordBuildRequest(BaseModel):
+    agent_id: str
+    payment_intent: PaymentIntentInput
+    pre_payment_checks: Optional[PrePaymentChecksInput] = None
+    post_payment_checks: Optional[PostPaymentChecksInput] = None
+    agent_action_atom: Optional[AgentActionAtomInput] = None
+    decision: str
+    context_state: ContextStateInput
+
+
+# ─────────────────────────────────────────────
 # JP Payment Evidence Guard v0.1 — rule-based logic
 # ─────────────────────────────────────────────
 
@@ -1456,17 +1510,65 @@ async def build_action_atom(req: ActionAtomBuildRequest):
     )
 
 
+@app.post("/api/payment-action-record/build")
+async def build_payment_action_record(req: PaymentActionRecordBuildRequest):
+    record_id = f"payment_record_{uuid.uuid4()}"
+    has_checks = bool(req.pre_payment_checks or req.post_payment_checks)
+    has_atom_or_evidence = bool(
+        req.agent_action_atom
+        or (req.context_state and req.context_state.evidence)
+    )
+    audit_ready = bool(
+        req.payment_intent and req.decision and has_checks and has_atom_or_evidence
+    )
+    external_control_record = {
+        "atom_id": req.agent_action_atom.atom_id if req.agent_action_atom else None,
+        "atom_status": req.agent_action_atom.status if req.agent_action_atom else None,
+        "atom_audit_ready": req.agent_action_atom.audit_ready if req.agent_action_atom else None,
+    }
+    return {
+        "record_id": record_id,
+        "record_type": "agent_payment_action_record",
+        "status": "created",
+        "experimental": True,
+        "stateless": True,
+        "agent_id": req.agent_id,
+        "payment_intent": req.payment_intent.model_dump(),
+        "payment_flow": {
+            "pre_payment": req.pre_payment_checks.model_dump() if req.pre_payment_checks else {},
+            "post_payment": req.post_payment_checks.model_dump() if req.post_payment_checks else {},
+            "external_control_record": external_control_record,
+        },
+        "decision": req.decision,
+        "context_state": req.context_state.model_dump(),
+        "audit_ready": audit_ready,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "can_be_combined_into": [
+            "Payment Control Evidence Packet",
+            "Agent Payment Audit Trail",
+        ],
+        "non_goals": [
+            "not a payment protocol",
+            "not a settlement layer",
+            "not a wallet",
+            "not a legal audit system",
+            "not an official standard",
+        ],
+    }
+
+
 @app.get("/")
 async def root():
     return {
         "name": "Agent Approval Unit Builder API",
         "version": "0.1.0",
         "endpoints": {
-            "POST /api/approval-unit/build":        "Build an Approval Unit (human decision contract) — 0.05 USDC",
-            "POST /api/remediation/verify":         "Verify AI remediation before approval (free)",
-            "POST /api/payment-evidence/check":     "Verify payment evidence and audit readiness — 0.03 USDC",
-            "POST /api/counterparty-invoice/check": "Verify counterparty and invoice info before payment — 0.02 USDC",
-            "POST /api/action-atom/build":          "Build an Agent Action Atom record for one AI-agent action (free)",
+            "POST /api/approval-unit/build":              "Build an Approval Unit (human decision contract) — 0.05 USDC",
+            "POST /api/remediation/verify":               "Verify AI remediation before approval (free)",
+            "POST /api/payment-evidence/check":           "Verify payment evidence and audit readiness — 0.03 USDC",
+            "POST /api/counterparty-invoice/check":       "Verify counterparty and invoice info before payment — 0.02 USDC",
+            "POST /api/action-atom/build":                "Build an Agent Action Atom record for one AI-agent action (free)",
+            "POST /api/payment-action-record/build":      "Build an Agent Payment Action Record combining payment intent, checks, evidence, and atom (free, experimental)",
         },
         "note": "v0.1 is build-only. No approval execution, blockchain, or payments.",
         "core_concept": "Approval Unit = Human Decision Contract",
@@ -2350,6 +2452,27 @@ async def agent_json():
                     "not a legal audit system",
                     "not an official standard",
                     "not an x402 paid endpoint",
+                ],
+            },
+            {
+                "name": "Agent Payment Action Record Builder",
+                "method": "POST",
+                "path": "/api/payment-action-record/build",
+                "pricing": "free",
+                "x402_required": False,
+                "type": "experimental_stateless_builder",
+                "purpose": "Combines payment intent, pre-payment checks, post-payment evidence, context state, decision, and Agent Action Atom into one external control record.",
+                "use_when": [
+                    "an AI agent needs to explain why a payment was allowed or rejected",
+                    "an AI agent needs to combine budget, counterparty, payment evidence, and action atom records",
+                    "a reviewer needs a single payment decision record",
+                ],
+                "non_goals": [
+                    "not a payment protocol",
+                    "not a settlement layer",
+                    "not a wallet",
+                    "not a legal audit system",
+                    "not an official standard",
                 ],
             },
         ],
