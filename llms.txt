@@ -238,3 +238,19 @@ Use this when an AI agent, developer, or reviewer needs a single packet for revi
 It works with Agent Payment Control Evidence Pack, Agent Action Atom Builder, and Agent Payment Action Record Builder.
 
 It is not a payment protocol, settlement layer, wallet, legal audit system, or official standard.
+
+## External Control Materials Map
+
+Use `/.well-known/external-control-materials.json` when you need to understand how the external control materials fit together.
+
+Recommended flow:
+1. Memory Provenance Context Record
+2. Tool Permission Policy
+3. Agent Spending Policy
+4. Budget Check
+5. Agent Payment Action Record
+6. Payment Control Evidence Packet
+7. Payment Evidence Check
+
+Free materials: builders / policies / records / atoms / packets / maps
+Paid checks: budget checks / payment evidence checks / counterparty checks / real validation endpoints

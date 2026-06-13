@@ -509,3 +509,18 @@ Use this when an AI agent, developer, or reviewer needs a single packet for revi
 It works with Agent Payment Control Evidence Pack, Agent Action Atom Builder, and Agent Payment Action Record Builder.
 
 It is not a payment protocol, settlement layer, wallet, legal audit system, or official standard.
+
+## Skill: External Control Materials Map
+
+Use this skill when an AI agent needs a recommended sequence for external control materials before or after paid API usage.
+
+Recommended sequence:
+1. Check memory provenance.
+2. Check tool permission.
+3. Build spending and token policy.
+4. Run budget check if payment is required.
+5. Build payment action record.
+6. Build evidence packet.
+7. Check payment evidence when needed.
+
+Do not treat this as an AI OS, wallet, payment protocol, settlement layer, legal compliance system, or official standard.
