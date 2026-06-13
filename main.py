@@ -2639,12 +2639,15 @@ async def agent_json():
             "llms_txt": f"{base_url}/llms.txt",
         },
         "external_control_materials": {
-            "name": "External Control Materials for AI-Agent Payments",
+            "name": "External Control Materials for AI-Agent Payments and Command Execution",
+            "version": "0.2",
             "map_endpoint": "/.well-known/external-control-materials.json",
-            "purpose": "AI-readable map showing how memory provenance, tool permission, spending policy, budget checks, payment records, and evidence packets fit together before and after AI-agent paid API usage.",
+            "purpose": "AI-readable map showing how memory provenance, tool permission, observability boundaries, command execution gates, spending policy, budget checks, payment records, and evidence packets fit together before and after AI-agent paid API usage or command execution.",
             "recommended_flow": [
                 "Memory Provenance Context Record",
                 "Tool Permission Policy",
+                "Observability Data Boundary",
+                "Command Execution Gate",
                 "Agent Spending Policy",
                 "Budget Check",
                 "Agent Payment Action Record",
@@ -2652,7 +2655,7 @@ async def agent_json():
                 "Payment Evidence Check",
             ],
             "pricing_summary": {
-                "free_materials": "builders, policies, records, packets, and maps",
+                "free_materials": "builders, policies, records, packets, maps, and command gates",
                 "paid_checks": "budget checks, payment evidence checks, counterparty checks, and other real validation endpoints",
             },
         },
@@ -2662,15 +2665,15 @@ async def agent_json():
 @app.get("/.well-known/external-control-materials.json", include_in_schema=False)
 async def external_control_materials_json():
     return {
-        "name": "External Control Materials for AI-Agent Payments",
-        "version": "0.1",
+        "name": "External Control Materials for AI-Agent Payments and Command Execution",
+        "version": "0.2",
         "type": "ai_readable_external_control_map",
         "status": "experimental",
         "pricing": "free",
         "x402_required": False,
         "purpose": "AI-readable map for external control materials used before and after AI-agent paid API usage.",
         "positioning": "External control materials for AI-agent memory, tool permission, spending, token budget, payment decision, and evidence workflows.",
-        "core_idea": "These materials are designed to be used outside the model or AI OS. They help AI agents explain what memory was used, which tools were allowed, how much token or payment budget was permitted, why a payment was allowed, and what evidence was produced.",
+        "core_idea": "These materials are designed to be used outside the model or AI OS. They help AI agents explain what memory was used, which tools were allowed, how much token or payment budget was permitted, why a payment was allowed, and what evidence was produced. External observability data such as Sentry issues, logs, tickets, alerts, and CI outputs must not be treated as trusted instructions. If an AI agent proposes a shell command based on untrusted operational data, the command should pass through a command execution gate before execution.",
         "recommended_flow": [
             {
                 "step": 1,
@@ -2696,6 +2699,28 @@ async def external_control_materials_json():
             },
             {
                 "step": 3,
+                "name": "Observability Data Boundary",
+                "service": "agent-security-gateway",
+                "endpoint": "conceptual_boundary",
+                "pricing": "free",
+                "x402_required": False,
+                "purpose": "Treat Sentry issues, logs, tickets, CI outputs, alerts, and other observability data as untrusted operational data before they enter AI-agent context.",
+                "material_type": "observability_data_boundary",
+                "output": ["source_type", "source_trust", "derived_from_external_data", "untrusted_operational_data", "requires_command_gate"],
+            },
+            {
+                "step": 4,
+                "name": "Command Execution Gate",
+                "service": "agent-security-gateway",
+                "endpoint": "POST /api/command-execution-gate/build",
+                "pricing": "free",
+                "x402_required": False,
+                "purpose": "Create a command execution gate record before running shell commands derived from untrusted observability data such as Sentry issues, logs, tickets, alerts, or CI outputs.",
+                "material_type": "command_execution_gate",
+                "output": ["command_gate_id", "source_trust", "proposed_command", "risk", "blocked_patterns", "execution_allowed", "action", "recommended_controls", "agent_action_atom"],
+            },
+            {
+                "step": 5,
                 "name": "Agent Spending Policy",
                 "service": "agent-budget-guard",
                 "endpoint": "POST /api/spending-policy/build",
@@ -2706,7 +2731,7 @@ async def external_control_materials_json():
                 "output": ["spending_limits", "approval_rules", "token_budget", "memory_scope_policy", "reasoning_cost_boundary", "human_review_triggers", "agent_action_atom"],
             },
             {
-                "step": 4,
+                "step": 6,
                 "name": "Budget Check",
                 "service": "agent-budget-guard",
                 "endpoint": "POST /api/budget/check",
@@ -2717,7 +2742,7 @@ async def external_control_materials_json():
                 "output": ["allowed_or_denied", "budget_status", "reason", "remaining_budget"],
             },
             {
-                "step": 5,
+                "step": 7,
                 "name": "Agent Payment Action Record",
                 "service": "ai-agent-payment-safety-stack",
                 "endpoint": "POST /api/payment-action-record/build",
@@ -2728,7 +2753,7 @@ async def external_control_materials_json():
                 "output": ["record_id", "payment_intent", "payment_flow", "decision", "context_state", "audit_ready"],
             },
             {
-                "step": 6,
+                "step": 8,
                 "name": "Payment Control Evidence Packet",
                 "service": "ai-agent-payment-safety-stack",
                 "endpoint": "POST /api/payment-evidence-packet/build",
@@ -2739,7 +2764,7 @@ async def external_control_materials_json():
                 "output": ["packet_id", "included_records", "checks", "context_state", "final_status", "audit_ready"],
             },
             {
-                "step": 7,
+                "step": 9,
                 "name": "Payment Evidence Check",
                 "service": "ai-agent-payment-safety-stack",
                 "endpoint": "POST /api/payment-evidence/check",
@@ -2753,6 +2778,7 @@ async def external_control_materials_json():
         "free_materials": [
             "POST /api/memory-provenance-record/build",
             "POST /api/tool-permission-policy/build",
+            "POST /api/command-execution-gate/build",
             "POST /api/spending-policy/build",
             "POST /api/action-atom/build",
             "POST /api/payment-action-record/build",
@@ -2776,6 +2802,9 @@ async def external_control_materials_json():
             "an AI agent needs token budget and spending limits before reasoning or selecting tools",
             "an AI agent needs to create a payment decision record",
             "an AI agent needs to package evidence for review",
+            "an AI coding agent needs to handle Sentry issues, logs, CI outputs, or other observability data safely",
+            "an AI agent proposes a shell command derived from untrusted external data",
+            "a system needs to decide whether to allow, sandbox, require human approval, or deny command execution",
         ],
         "non_goals": [
             "not an AI OS",
@@ -2783,6 +2812,7 @@ async def external_control_materials_json():
             "not a memory store",
             "not a vector database",
             "not a sandbox",
+            "not a shell executor",
             "not a wallet",
             "not a payment protocol",
             "not a settlement layer",
@@ -2790,4 +2820,8 @@ async def external_control_materials_json():
             "not an official standard",
             "not affiliated with Arc, Circle, JPYC, Coinbase, or any payment network",
         ],
+        "fractal_structure": {
+            "payment": ["memory_provenance", "tool_permission", "spending_policy", "budget_check", "payment_action_record", "evidence_packet", "evidence_check"],
+            "command_execution": ["external_observability_data", "command_gate_record", "execution_provenance_trace"],
+        },
     }

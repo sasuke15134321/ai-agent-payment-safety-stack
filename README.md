@@ -897,20 +897,30 @@ This project includes an AI-readable map for external control materials used bef
 Map endpoint:
 `/.well-known/external-control-materials.json`
 
+v0.2 adds Observability Data Boundary and Command Execution Gate.
+
+This is useful when AI coding agents read Sentry issues, logs, tickets, alerts, or CI outputs and propose shell commands.
+
+External observability data should be treated as untrusted operational data, not as trusted instructions.
+
+Commands derived from untrusted observability data should pass through a Command Execution Gate before execution.
+
 The map explains how the following materials fit together:
 
 1. Memory Provenance Context Record
 2. Tool Permission Policy
-3. Agent Spending Policy
-4. Budget Check
-5. Agent Payment Action Record
-6. Payment Control Evidence Packet
-7. Payment Evidence Check
+3. Observability Data Boundary
+4. Command Execution Gate
+5. Agent Spending Policy
+6. Budget Check
+7. Agent Payment Action Record
+8. Payment Control Evidence Packet
+9. Payment Evidence Check
 
 Free materials create structure:
-- policies / records / atoms / packets / maps
+- policies / records / atoms / packets / maps / command gates
 
 Paid endpoints perform real checks:
 - budget checks / counterparty checks / payment evidence checks / risk validation
 
-This is external control material for AI agents. It is not an AI OS, model provider, wallet, payment protocol, settlement layer, legal compliance system, or official standard.
+This is external control material for AI agents. It is not an AI OS, model provider, sandbox, shell executor, wallet, payment protocol, settlement layer, legal compliance system, or official standard.
