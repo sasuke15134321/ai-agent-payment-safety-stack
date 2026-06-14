@@ -535,3 +535,13 @@ Recommended sequence:
 9. Check payment evidence when needed.
 
 Do not treat this as an AI OS, sandbox, shell executor, wallet, payment protocol, settlement layer, legal compliance system, or official standard.
+
+## Skill: Agent Payment Review
+
+Use this skill before allowing an AI agent to make a paid API call or crypto payment.
+
+Input: agent_id / amount / currency / counterparty / payment purpose / source text / requested tool / context state / policy
+
+Output: decision (allow/deny/review_required) / risk_level / reason / recommended_action / evidence_id / checks performed
+
+Do not use this endpoint to execute payments. It only reviews whether a payment should be allowed, denied, or sent to human review.

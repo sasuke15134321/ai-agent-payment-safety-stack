@@ -924,3 +924,25 @@ Paid endpoints perform real checks:
 - budget checks / counterparty checks / payment evidence checks / risk validation
 
 This is external control material for AI agents. It is not an AI OS, model provider, sandbox, shell executor, wallet, payment protocol, settlement layer, legal compliance system, or official standard.
+
+## Agent Payment Review API
+
+POST /api/payment-review/check provides a product-level review flow for AI-agent payments.
+
+It answers one question:
+Should this AI agent be allowed to make this payment?
+
+The API returns:
+- allow
+- deny
+- review_required
+
+It reviews amount and currency, counterparty information, payment purpose, invoice or source text, requested tool, context state, and policy limits.
+
+It returns an evidence_id, decision, risk level, checks performed, and recommended action.
+
+This endpoint does not execute payments, does not handle private keys, and is not a wallet, payment protocol, settlement layer, legal compliance system, or official standard.
+
+Agent Payment Review API is designed as the product-level review flow.
+Individual builders and records may be free.
+Actual checks and review decisions may be paid or metered depending on deployment.

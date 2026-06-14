@@ -1621,6 +1621,235 @@ async def build_payment_evidence_packet(req: PaymentEvidencePacketRequest):
     }
 
 
+# --- Agent Payment Review API ---
+
+class PaymentCounterpartyInput(BaseModel):
+    name: Optional[str] = None
+    domain: Optional[str] = None
+    wallet: Optional[str] = None
+
+
+class PaymentContextStateInput(BaseModel):
+    status: str = "unknown"
+    use_rule: Optional[str] = None
+    evidence: Optional[str] = None
+    last_checked: Optional[str] = None
+
+
+class PaymentPolicyInput(BaseModel):
+    max_amount_per_payment: float = 0.10
+    allowed_currencies: List[str] = ["USDC"]
+    require_human_approval_above: float = 0.10
+    block_unknown_counterparty: bool = False
+    require_payment_evidence: bool = True
+
+
+class PaymentReviewCheckRequest(BaseModel):
+    agent_id: str
+    user_id: Optional[str] = None
+    amount: float
+    currency: str
+    counterparty: Optional[PaymentCounterpartyInput] = None
+    payment_purpose: Optional[str] = None
+    source_text: Optional[str] = None
+    requested_tool: Optional[str] = None
+    context_state: Optional[PaymentContextStateInput] = None
+    policy: Optional[PaymentPolicyInput] = None
+
+
+_INJECTION_PATTERNS = [
+    "ignore previous instructions",
+    "run this command",
+    "curl | sh",
+    "send private key",
+    "print env",
+    "read .env",
+    "cat ~/.npmrc",
+    "cat ~/.aws",
+    "gh auth token",
+]
+
+_DANGEROUS_TOOLS = {"wallet_execution", "private_key_access", "credential_access"}
+
+
+@app.post("/api/payment-review/check", include_in_schema=False)
+async def payment_review_check(req: PaymentReviewCheckRequest):
+    policy = req.policy or PaymentPolicyInput()
+    context_state = req.context_state or PaymentContextStateInput()
+    counterparty = req.counterparty or PaymentCounterpartyInput()
+
+    input_dict = req.model_dump()
+    input_json = json.dumps(input_dict, sort_keys=True, default=str)
+    input_hash = hashlib.sha256(input_json.encode()).hexdigest()
+
+    checks = []
+    deny_reasons = []
+    review_reasons = []
+
+    # --- amount check ---
+    if req.amount < 0:
+        checks.append({"name": "amount_check", "result": "deny", "reason": "Amount is negative"})
+        deny_reasons.append("amount is negative")
+    else:
+        checks.append({"name": "amount_check", "result": "pass", "reason": "Amount is non-negative"})
+
+    # --- currency check ---
+    if req.currency not in policy.allowed_currencies:
+        checks.append({"name": "currency_check", "result": "deny", "reason": f"Currency {req.currency} not in allowed_currencies"})
+        deny_reasons.append(f"currency {req.currency} not allowed")
+    else:
+        checks.append({"name": "currency_check", "result": "pass", "reason": f"Currency {req.currency} is allowed"})
+
+    # --- injection check ---
+    injection_detected = False
+    if req.source_text:
+        lower_text = req.source_text.lower()
+        for pattern in _INJECTION_PATTERNS:
+            if pattern in lower_text:
+                injection_detected = True
+                checks.append({"name": "injection_check", "result": "deny", "reason": f"Dangerous pattern detected: '{pattern}'"})
+                deny_reasons.append(f"injection pattern: {pattern}")
+                break
+    if not injection_detected:
+        checks.append({"name": "injection_check", "result": "pass", "reason": "No injection patterns detected"})
+
+    # --- tool permission check ---
+    if req.requested_tool and req.requested_tool in _DANGEROUS_TOOLS:
+        checks.append({"name": "tool_permission_check", "result": "deny", "reason": f"Tool {req.requested_tool} is not permitted"})
+        deny_reasons.append(f"dangerous tool: {req.requested_tool}")
+    else:
+        checks.append({"name": "tool_permission_check", "result": "pass", "reason": "Tool is permitted or not specified"})
+
+    # --- context state check ---
+    if context_state.status == "blocked":
+        checks.append({"name": "context_state_check", "result": "deny", "reason": "Context state is blocked"})
+        deny_reasons.append("context state is blocked")
+    elif context_state.status in ("unknown", "stale", "historical"):
+        checks.append({"name": "context_state_check", "result": "review_required", "reason": f"Context state is {context_state.status}"})
+        review_reasons.append(f"context state is {context_state.status}")
+    else:
+        checks.append({"name": "context_state_check", "result": "pass", "reason": f"Context state is {context_state.status}"})
+
+    # --- counterparty check (review_required if deny not triggered) ---
+    has_counterparty = bool(counterparty.name or counterparty.domain or counterparty.wallet)
+    if not has_counterparty and not deny_reasons:
+        checks.append({"name": "counterparty_check", "result": "review_required", "reason": "Counterparty information is missing or unverified"})
+        review_reasons.append("counterparty is unknown")
+    else:
+        checks.append({"name": "counterparty_check", "result": "pass" if has_counterparty else "review_required", "reason": "Counterparty provided" if has_counterparty else "Counterparty information missing"})
+
+    # --- budget check (review_required if deny not triggered) ---
+    if not deny_reasons and req.amount >= policy.require_human_approval_above:
+        checks.append({"name": "budget_check", "result": "review_required", "reason": f"Amount {req.amount} >= require_human_approval_above {policy.require_human_approval_above}"})
+        review_reasons.append("amount requires human approval")
+    else:
+        if not deny_reasons:
+            checks.append({"name": "budget_check", "result": "pass", "reason": f"Amount {req.amount} within policy limit"})
+
+    # --- source text origin check ---
+    if not deny_reasons and req.source_text:
+        checks.append({"name": "source_text_check", "result": "review_required", "reason": "Source text present — external origin cannot be verified"})
+        review_reasons.append("source text from external origin")
+
+    # --- requested tool check (paid API) ---
+    if not deny_reasons and req.requested_tool and req.requested_tool not in _DANGEROUS_TOOLS:
+        if "paid" in req.requested_tool or "api" in req.requested_tool.lower():
+            checks.append({"name": "requested_tool_check", "result": "review_required", "reason": f"Requested tool '{req.requested_tool}' may be a paid API"})
+            review_reasons.append("requested tool may be paid API")
+
+    # --- decide ---
+    if deny_reasons:
+        decision = "deny"
+        risk_level = "high"
+        reason = "; ".join(deny_reasons)
+        recommended_action = "Block this payment. Do not proceed."
+        human_review_required = False
+    elif review_reasons:
+        decision = "review_required"
+        risk_level = "medium"
+        reason = "; ".join(review_reasons)
+        recommended_action = "Route to human review before proceeding."
+        human_review_required = True
+    else:
+        decision = "allow"
+        risk_level = "low"
+        reason = "All checks passed"
+        recommended_action = "Payment may proceed within policy limits."
+        human_review_required = False
+
+    # --- status fields ---
+    if req.amount > policy.max_amount_per_payment:
+        budget_status = "exceeds_policy"
+    elif req.amount >= policy.require_human_approval_above:
+        budget_status = "requires_human_approval"
+    else:
+        budget_status = "within_policy"
+
+    counterparty_status = "provided" if has_counterparty else "unknown"
+    injection_risk = "detected" if injection_detected else "none"
+
+    if req.requested_tool in _DANGEROUS_TOOLS:
+        tool_permission_status = "blocked"
+    elif req.requested_tool:
+        tool_permission_status = "allowed"
+    else:
+        tool_permission_status = "not_requested"
+
+    ctx_map = {"current": "current", "blocked": "blocked", "unknown": "stale_or_unknown", "stale": "stale_or_unknown", "historical": "historical"}
+    memory_context_status = ctx_map.get(context_state.status, context_state.status)
+
+    review_id = f"payment_review_{uuid.uuid4()}"
+    evidence_id = f"ev_{uuid.uuid4()}"
+
+    return {
+        "review_id": review_id,
+        "review_type": "agent_payment_review",
+        "status": "created",
+        "experimental": True,
+        "stateless": True,
+        "agent_id": req.agent_id,
+        "decision": decision,
+        "risk_level": risk_level,
+        "reason": reason,
+        "recommended_action": recommended_action,
+        "budget_status": budget_status,
+        "counterparty_status": counterparty_status,
+        "injection_risk": injection_risk,
+        "tool_permission_status": tool_permission_status,
+        "memory_context_status": memory_context_status,
+        "checks": checks,
+        "evidence": {
+            "evidence_id": evidence_id,
+            "policy_version": "agent-payment-review-v0.1",
+            "input_hash": input_hash,
+            "human_review_required": human_review_required,
+            "checks_performed": [c["name"] for c in checks],
+        },
+        "agent_action_atom": {
+            "atom_type": "payment_review_created",
+            "action_type": "payment_review",
+            "target": "agent_payment_decision",
+            "audit_ready": True,
+            "note": "Atom-compatible reference. This endpoint does not execute payments.",
+        },
+        "can_feed_into": [
+            "Agent Payment Action Record",
+            "Payment Control Evidence Packet",
+            "External Control Materials Map",
+        ],
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "non_goals": [
+            "not a wallet",
+            "not a payment protocol",
+            "not a settlement layer",
+            "not a legal compliance system",
+            "not an official standard",
+            "does not execute payments",
+            "does not handle private keys",
+        ],
+    }
+
+
 @app.get("/")
 async def root():
     return {
@@ -2559,6 +2788,39 @@ async def agent_json():
                     "not a wallet",
                     "not a legal audit system",
                     "not an official standard",
+                ],
+            },
+            {
+                "name": "Agent Payment Review API",
+                "method": "POST",
+                "path": "/api/payment-review/check",
+                "pricing": "free",
+                "x402_required": False,
+                "type": "payment_review_decision",
+                "purpose": "Returns allow, deny, or review_required before an AI agent makes a paid API call or crypto payment.",
+                "use_when": [
+                    "an AI agent needs a payment review before using a paid API",
+                    "a system needs to decide whether to allow, deny, or require human review for an agent payment",
+                    "a developer needs an evidence_id for a payment decision",
+                ],
+                "returns": [
+                    "decision", "risk_level", "reason", "recommended_action",
+                    "budget_status", "counterparty_status", "injection_risk",
+                    "tool_permission_status", "memory_context_status", "evidence_id",
+                ],
+                "can_feed_into": [
+                    "Agent Payment Action Record",
+                    "Payment Control Evidence Packet",
+                    "External Control Materials Map",
+                ],
+                "non_goals": [
+                    "not a wallet",
+                    "not a payment protocol",
+                    "not a settlement layer",
+                    "not a legal compliance system",
+                    "not an official standard",
+                    "does not execute payments",
+                    "does not handle private keys",
                 ],
             },
         ],

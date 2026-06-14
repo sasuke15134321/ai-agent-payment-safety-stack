@@ -335,6 +335,109 @@ paths:
         '200':
           description: OK
 
+  /api/payment-review/check:
+    post:
+      summary: Agent Payment Review — returns allow, deny, or review_required
+      description: >
+        Returns allow, deny, or review_required before an AI agent makes a paid API call or crypto payment.
+        Free endpoint. Does not execute payments. Does not handle private keys.
+      operationId: payment_review_check
+      tags:
+        - Payment Review
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - agent_id
+                - amount
+                - currency
+              properties:
+                agent_id:
+                  type: string
+                user_id:
+                  type: string
+                  nullable: true
+                amount:
+                  type: number
+                currency:
+                  type: string
+                counterparty:
+                  type: object
+                  nullable: true
+                  properties:
+                    name:
+                      type: string
+                    domain:
+                      type: string
+                    wallet:
+                      type: string
+                payment_purpose:
+                  type: string
+                  nullable: true
+                source_text:
+                  type: string
+                  nullable: true
+                requested_tool:
+                  type: string
+                  nullable: true
+                context_state:
+                  type: object
+                  nullable: true
+                  properties:
+                    status:
+                      type: string
+                      default: unknown
+                    use_rule:
+                      type: string
+                    evidence:
+                      type: string
+                    last_checked:
+                      type: string
+                policy:
+                  type: object
+                  nullable: true
+                  properties:
+                    max_amount_per_payment:
+                      type: number
+                      default: 0.10
+                    allowed_currencies:
+                      type: array
+                      items:
+                        type: string
+                      default: ["USDC"]
+                    require_human_approval_above:
+                      type: number
+                      default: 0.10
+                    block_unknown_counterparty:
+                      type: boolean
+                      default: false
+                    require_payment_evidence:
+                      type: boolean
+                      default: true
+      responses:
+        '200':
+          description: Payment review decision
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  review_id:
+                    type: string
+                  decision:
+                    type: string
+                    enum: [allow, deny, review_required]
+                  risk_level:
+                    type: string
+                    enum: [low, medium, high]
+                  reason:
+                    type: string
+                  evidence:
+                    type: object
+
 components:
   schemas:
     ApprovalUnitBuildRequest:

@@ -260,3 +260,16 @@ Recommended flow:
 
 Free materials: builders / policies / records / atoms / packets / maps / command gates
 Paid checks: budget checks / payment evidence checks / counterparty checks / real validation endpoints
+
+## Agent Payment Review API
+
+Use POST /api/payment-review/check when an AI agent needs a single review decision before making a paid API call or crypto payment.
+
+It returns:
+- allow
+- deny
+- review_required
+
+Use it before payment execution. It reviews budget status, counterparty status, injection risk, tool permission status, memory context status, and returns an evidence_id.
+
+This endpoint does not execute payments and does not handle private keys.
