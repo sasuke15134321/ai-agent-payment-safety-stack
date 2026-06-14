@@ -952,3 +952,9 @@ This endpoint does not execute payments, does not handle private keys, and is no
 Agent Payment Review API is designed as the product-level review flow.
 Individual builders and records may be free.
 Actual checks and review decisions may be paid or metered depending on deployment.
+
+## OKF-style External Control Materials Bundle
+
+OKF-compatible experimental Markdown bundle for AI-readable external control materials.
+
+See: okf/index.md

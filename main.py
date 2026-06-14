@@ -2923,6 +2923,14 @@ async def agent_json():
                 "paid_checks": "budget checks, payment evidence checks, counterparty checks, and other real validation endpoints",
             },
         },
+        "okf_bundle": {
+            "name": "External Control Materials Bundle",
+            "version": "0.1",
+            "type": "okf_compatible_experimental_bundle",
+            "index": "/okf/index.md",
+            "description": "OKF-compatible experimental Markdown bundle describing 11 external control materials for AI-agent tool use and payment decisions.",
+            "note": "Inspired by Open Knowledge Format. Not an official OKF implementation.",
+        },
     }
 
 
@@ -3117,5 +3125,10 @@ async def external_control_materials_json():
             "payment": ["memory_provenance", "tool_permission", "spending_policy", "budget_check", "payment_action_record", "evidence_packet", "evidence_check"],
             "command_execution": ["external_observability_data", "command_gate_record", "execution_provenance_trace"],
             "approval_gates": ["tool_approval_check", "payment_review_decision", "human_approval_or_sandbox"],
+        },
+        "okf_bundle": {
+            "index": "/okf/index.md",
+            "version": "0.1",
+            "description": "OKF-compatible experimental Markdown bundle for AI-readable external control materials.",
         },
     }

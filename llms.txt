@@ -282,3 +282,8 @@ It returns:
 Use it before payment execution. It reviews budget status, counterparty status, injection risk, tool permission status, memory context status, and returns an evidence_id.
 
 This endpoint does not execute payments and does not handle private keys.
+
+## OKF-style External Control Materials Bundle
+
+See okf/index.md for Markdown descriptions of all 11 external control materials.
+Inspired by Open Knowledge Format. Not an official OKF implementation.
