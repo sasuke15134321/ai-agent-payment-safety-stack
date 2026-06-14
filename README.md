@@ -899,6 +899,10 @@ Map endpoint:
 
 v0.2 adds Observability Data Boundary and Command Execution Gate.
 
+v0.3 adds Tool Approval Check and Payment Review as runtime approval gates.
+
+These gates return allow, deny, or review_required before an AI agent uses a tool or makes a payment.
+
 This is useful when AI coding agents read Sentry issues, logs, tickets, alerts, or CI outputs and propose shell commands.
 
 External observability data should be treated as untrusted operational data, not as trusted instructions.
@@ -909,16 +913,18 @@ The map explains how the following materials fit together:
 
 1. Memory Provenance Context Record
 2. Tool Permission Policy
-3. Observability Data Boundary
-4. Command Execution Gate
-5. Agent Spending Policy
-6. Budget Check
-7. Agent Payment Action Record
-8. Payment Control Evidence Packet
-9. Payment Evidence Check
+3. Tool Approval Check ← new in v0.3
+4. Observability Data Boundary
+5. Command Execution Gate
+6. Agent Spending Policy
+7. Payment Review ← new in v0.3
+8. Budget Check
+9. Agent Payment Action Record
+10. Payment Control Evidence Packet
+11. Payment Evidence Check
 
 Free materials create structure:
-- policies / records / atoms / packets / maps / command gates
+- policies / records / atoms / packets / maps / command gates / tool approval / payment review
 
 Paid endpoints perform real checks:
 - budget checks / counterparty checks / payment evidence checks / risk validation

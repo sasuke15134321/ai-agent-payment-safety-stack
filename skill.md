@@ -545,3 +545,11 @@ Input: agent_id / amount / currency / counterparty / payment purpose / source te
 Output: decision (allow/deny/review_required) / risk_level / reason / recommended_action / evidence_id / checks performed
 
 Do not use this endpoint to execute payments. It only reviews whether a payment should be allowed, denied, or sent to human review.
+
+## Skill: External Control Materials Map v0.3
+
+v0.3 adds two runtime approval gates:
+- Tool Approval Check: before tool use
+- Payment Review: before payment
+
+Use these gates to get allow, deny, or review_required before executing.

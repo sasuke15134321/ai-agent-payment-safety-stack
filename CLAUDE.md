@@ -100,3 +100,39 @@ Core principle: Decision ≠ provenance (plausibility is not traceability).
 - Scope: Free/stateless builder. No DB storage, no pricing change, no x402 manifest change, no existing paid endpoint changes.
 - Notes: Not a memory store, not a vector database, not a model provider, not a payment protocol, not a wallet, not a settlement layer, not a legal compliance system, not an official standard.
 - commit: "Add experimental Memory Provenance Context Record builder" / 2026-06-13
+
+## External Control Materials Map v0.1
+
+- Repository: ai-agent-payment-safety-stack
+- Endpoint: GET /.well-known/external-control-materials.json
+- Purpose: Add an AI-readable map showing how external control materials fit together before and after AI-agent paid API usage.
+- Flow: Memory Provenance Context Record → Tool Permission Policy → Agent Spending Policy → Budget Check → Agent Payment Action Record → Payment Control Evidence Packet → Payment Evidence Check.
+- Positioning: External control materials for AI-agent memory, tool permission, token budget, spending, payment decisions, and evidence workflows.
+- Pricing: Free static map. Not included in x402 manifest.
+- Relation: Connects agent-memory-api, agent-security-gateway, agent-budget-guard, and ai-agent-payment-safety-stack into a recommended AI-readable flow.
+- Scope: Static map / discovery material only. No DB storage, no pricing change, no x402 manifest change, no existing paid endpoint changes.
+- Notes: Not an AI OS, not a model provider, not a memory store, not a sandbox, not a wallet, not a payment protocol, not a settlement layer, not a legal compliance system, not an official standard.
+- commit: "Add External Control Materials Map" / 2026-06-13
+
+## Experimental Command Execution Gate Builder v0.1
+
+- Repository: agent-security-gateway
+- Endpoint: POST /api/command-execution-gate/build
+- Purpose: Add a free stateless builder that creates external control records for AI-agent shell command execution decisions. Detects dangerous patterns (npx, curl | bash, credential access, etc.), assesses risk level (high/medium/low), and returns action recommendation (deny / require_human_approval_or_sandbox / allow_with_monitoring).
+- Positioning: Experimental external control record builder for AI-agent command execution safety. Does NOT execute shell commands.
+- Relation: Feeds into Tool Permission Policy, Agent Spending Policy, Agent Action Atom, Execution Provenance Trace, Payment Control Evidence Packet, and External Control Materials Map.
+- Scope: Free/stateless builder. No DB storage, no pricing change, no x402 manifest change, no existing endpoint changes.
+- Notes: Not a sandbox, not a shell executor, not a model provider, not a payment protocol, not a settlement layer, not a legal compliance system, not an official standard.
+- commit: "Add Command Execution Gate Builder" / 2026-06-13
+
+## External Control Materials Map v0.2
+
+- Repository: ai-agent-payment-safety-stack
+- Endpoint: GET /.well-known/external-control-materials.json
+- Purpose: Update the AI-readable external control materials map to include Observability Data Boundary and Command Execution Gate.
+- Flow: Memory Provenance Context Record → Tool Permission Policy → Observability Data Boundary → Command Execution Gate → Agent Spending Policy → Budget Check → Agent Payment Action Record → Payment Control Evidence Packet → Payment Evidence Check.
+- Positioning: External control materials for AI-agent memory, tool permission, observability data, command execution, token budget, spending, payment decisions, and evidence workflows.
+- Pricing: Free static map. Not included in x402 manifest.
+- Scope: Static map / discovery material only. No DB storage, no pricing change, no x402 manifest change, no existing paid endpoint changes.
+- Notes: Not an AI OS, not a model provider, not a memory store, not a sandbox, not a shell executor, not a wallet, not a payment protocol, not a settlement layer, not a legal compliance system, not an official standard.
+- commit: "Update External Control Materials Map to v0.2" / 2026-06-13
