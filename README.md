@@ -963,7 +963,9 @@ Agent Payment Review API is designed as the product-level review flow.
 Individual builders and records may be free.
 Actual checks and review decisions may be paid or metered depending on deployment.
 
-## OKF-style External Control Materials Bundle
+## OKF-style External Control Materials Bundle v0.2
+
+The OKF-style External Control Materials Bundle v0.2 mirrors External Control Materials Map v0.4 and includes Search Result Trust Check as the trust gate before tool execution and payment decisions.
 
 OKF-compatible experimental Markdown bundle for AI-readable external control materials.
 

@@ -48,6 +48,10 @@ Free. Stateless. Not in x402 manifest.
 - context_state
 - policy
 
+## Related materials
+
+- [Search Result Trust Check](./search_result_trust_check.md)
+
 ## Output summary
 
 - review_id

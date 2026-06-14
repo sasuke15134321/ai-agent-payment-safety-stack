@@ -293,7 +293,8 @@ Use it before payment execution. It reviews budget status, counterparty status, 
 
 This endpoint does not execute payments and does not handle private keys.
 
-## OKF-style External Control Materials Bundle
+## OKF-style External Control Materials Bundle v0.2
 
-See okf/index.md for Markdown descriptions of all 11 external control materials.
+See okf/index.md for Markdown descriptions of all 12 external control materials.
+The v0.2 bundle includes Search Result Trust Check as the trust decision boundary between Memory Provenance and downstream execution/payment decisions.
 Inspired by Open Knowledge Format. Not an official OKF implementation.

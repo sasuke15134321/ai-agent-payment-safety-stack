@@ -48,6 +48,10 @@ Free. Stateless. No DB storage.
 ## Output summary
 
 - policy_id
+
+## Related materials
+
+- [Search Result Trust Check](./search_result_trust_check.md)
 - allowed_tools
 - blocked_tools
 - approval_required_tools

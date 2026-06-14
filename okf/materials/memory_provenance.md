@@ -54,6 +54,12 @@ Free. Stateless. No DB storage.
 - evidence_id
 - agent_action_atom (Atom-compatible reference)
 
+## Related materials
+
+Memory Provenance records where context came from.
+Search Result Trust Check decides whether that context can be trusted for downstream decisions.
+- [Search Result Trust Check](./search_result_trust_check.md)
+
 ## Non-goals
 
 - does not store memory

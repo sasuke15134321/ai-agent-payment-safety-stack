@@ -48,6 +48,10 @@ Free. Stateless. Not in x402 manifest.
 ## Output summary
 
 - approval_id
+
+## Related materials
+
+- [Search Result Trust Check](./search_result_trust_check.md)
 - decision (allow / deny / review_required)
 - risk_level (low / medium / high / critical)
 - reason

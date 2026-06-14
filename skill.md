@@ -564,3 +564,21 @@ Three core judgment gates:
 3. Payment Review: before payment
 
 Trust → Execution → Payment → Evidence
+
+## Skill: OKF-style External Control Materials Bundle v0.2
+
+The OKF-style External Control Materials Bundle v0.2 mirrors External Control Materials Map v0.4 and includes Search Result Trust Check as the trust gate before tool execution and payment decisions.
+
+Use this when you need a comprehensive Markdown-based knowledge bundle for AI-agent external control materials, including:
+- Memory Provenance Context Record
+- Search Result Trust Check
+- Tool Permission Policy
+- Tool Approval Check
+- Command Execution Gate
+- Agent Spending Policy
+- Budget Check
+- Agent Payment Action Record
+- Payment Control Evidence Packet
+- Payment Evidence Check
+
+See okf/index.md for the complete v0.2 bundle.

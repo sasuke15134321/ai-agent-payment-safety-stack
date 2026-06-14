@@ -2931,10 +2931,10 @@ async def agent_json():
         },
         "okf_bundle": {
             "name": "External Control Materials Bundle",
-            "version": "0.1",
+            "version": "0.2",
             "type": "okf_compatible_experimental_bundle",
             "index": "/okf/index.md",
-            "description": "OKF-compatible experimental Markdown bundle describing 11 external control materials for AI-agent tool use and payment decisions.",
+            "description": "OKF-compatible experimental Markdown bundle v0.2 mirroring External Control Materials Map v0.4. Includes Search Result Trust Check as the trust gate before tool execution and payment decisions. Contains 12 external control materials for AI-agent memory, search result trust, tool permission, approval, command execution, spending, payment, and evidence workflows.",
             "note": "Inspired by Open Knowledge Format. Not an official OKF implementation.",
         },
     }

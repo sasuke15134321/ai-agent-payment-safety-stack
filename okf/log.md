@@ -4,6 +4,16 @@ title: Bundle Change Log
 
 # OKF Bundle Change Log
 
+## v0.2 - 2026-06-14
+
+- Added Search Result Trust Check as Step 2.
+- Updated recommended flow from 11 steps to 12 steps.
+- Added three core gates:
+  - trust: Search Result Trust Check
+  - execution: Tool Approval Check
+  - payment: Payment Review
+- Updated OKF-style bundle to match External Control Materials Map v0.4.
+
 ## v0.1 — 2026-06-14
 
 Initial release.
