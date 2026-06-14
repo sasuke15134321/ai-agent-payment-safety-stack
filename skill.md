@@ -553,3 +553,14 @@ v0.3 adds two runtime approval gates:
 - Payment Review: before payment
 
 Use these gates to get allow, deny, or review_required before executing.
+
+## Skill: External Control Materials Map v0.4
+
+v0.4 adds Search Result Trust Check as Step 2.
+
+Three core judgment gates:
+1. Search Result Trust Check: before using retrieved knowledge
+2. Tool Approval Check: before tool execution
+3. Payment Review: before payment
+
+Trust → Execution → Payment → Evidence

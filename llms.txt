@@ -254,20 +254,30 @@ Use POST /api/payment-review/check before paid API calls or crypto payments.
 
 Both return allow, deny, or review_required without executing the action.
 
+v0.4 adds Search Result Trust Check.
+
+Three core judgment gates are now available:
+- POST /api/search-result-trust/check: trust gate for retrieved knowledge
+- POST /api/tool-approval/check: execution gate for tool use
+- POST /api/payment-review/check: payment gate for paid API calls
+
+Use Search Result Trust Check before relying on any retrieved result, memory atom, observation, SOP, log, or operational record.
+
 Recommended flow:
 1. Memory Provenance Context Record
-2. Tool Permission Policy
-3. Tool Approval Check
-4. Observability Data Boundary
-5. Command Execution Gate
-6. Agent Spending Policy
-7. Payment Review
-8. Budget Check
-9. Agent Payment Action Record
-10. Payment Control Evidence Packet
-11. Payment Evidence Check
+2. Search Result Trust Check
+3. Tool Permission Policy
+4. Tool Approval Check
+5. Observability Data Boundary
+6. Command Execution Gate
+7. Agent Spending Policy
+8. Payment Review
+9. Budget Check
+10. Agent Payment Action Record
+11. Payment Control Evidence Packet
+12. Payment Evidence Check
 
-Free materials: builders / policies / records / atoms / packets / maps / command gates / tool approval / payment review
+Free materials: builders / policies / records / atoms / packets / maps / command gates / tool approval / payment review / search trust check
 Paid checks: budget checks / payment evidence checks / counterparty checks / real validation endpoints
 
 ## Agent Payment Review API
