@@ -12,6 +12,7 @@ info:
 
     Also includes AI-readable guidance for Agent Action Atom and Agent Payment Action Record
     to help describe, audit, and review AI-agent payment decisions.
+    Also supports payment-to-result verification for paid data API calls, including result_received and result_usable tracking.
 
 servers:
   - url: https://ai-agent-payment-safety-stack.onrender.com

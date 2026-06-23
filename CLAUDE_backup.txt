@@ -20,7 +20,7 @@ Core concept: **Approval Unit = Human Decision Contract**
 
 ## Architecture Notes
 - **Payment Middleware**: x402 exact payment scheme on Base mainnet (eip155:8453)
-- **Endpoints**: 
+- **Endpoints**:
   - `POST /api/approval-unit/build` (0.05 USDC) - Paid endpoint
   - `POST /api/remediation/verify` (Free) - Verification gate
 - **Bazaar Discovery**: Automatic discovery via /.well-known/x402 for CDP Bazaar facilitators
@@ -136,3 +136,44 @@ Core principle: Decision ≠ provenance (plausibility is not traceability).
 - Scope: Static map / discovery material only. No DB storage, no pricing change, no x402 manifest change, no existing paid endpoint changes.
 - Notes: Not an AI OS, not a model provider, not a memory store, not a sandbox, not a shell executor, not a wallet, not a payment protocol, not a settlement layer, not a legal compliance system, not an official standard.
 - commit: "Update External Control Materials Map to v0.2" / 2026-06-13
+
+## OKF-style External Control Materials Bundle v0.2
+
+- Repository: ai-agent-payment-safety-stack
+- Index: /okf/index.md
+- Version: 0.2 (updated from v0.1's 11 materials to v0.2's 12 materials)
+- Type: OKF-compatible experimental Markdown bundle
+- Purpose: Provides Markdown-based documentation of 12 external control materials organized according to the 12-step recommended flow in External Control Materials Map v0.4. Introduces Search Result Trust Check as the trust gate before tool execution and payment decisions.
+- 12 Materials:
+  1. Memory Provenance Context Record
+  2. Search Result Trust Check
+  3. Tool Permission Policy
+  4. Tool Approval Check
+  5. Observability Data Boundary
+  6. Command Execution Gate
+  7. Agent Spending Policy
+  8. Payment Review (Payment Gate)
+  9. Budget Check
+  10. Agent Payment Action Record
+  11. Payment Control Evidence Packet
+  12. Payment Evidence Check
+- Three Core Judgment Gates: Search Result Trust Check (Step 2, trust), Tool Approval Check (Step 4, execution), Payment Review (Step 8, payment)
+- Positioning: OKF-compatible external control materials knowledge base for AI-agent memory provenance, search result trust, tool permission, tool approval, observability boundaries, command execution, spending, payment decisions, and evidence workflows. Inspired by Open Knowledge Format (not an official OKF implementation).
+- Pricing: Free (Markdown documentation only)
+- Scope: Documentation update only. No new API endpoints, no DB storage, no pricing changes, no x402 manifest changes, no existing endpoint changes.
+- Notes: Experimental OKF-compatible bundle. Not a model provider, not a memory store, not a sandbox, not a shell executor, not a wallet, not a payment protocol, not a settlement layer, not a legal compliance system, not an official standard.
+- Related: Mirrors External Control Materials Map v0.4 endpoint structure and decision gates
+- commit: "Update OKF-style bundle to v0.2" / 2026-06-14
+
+## External Control Materials Cross-Link v0.2
+
+- Purpose: Update cross-links across related repositories so agents can discover the central External Control Materials Map v0.4 and OKF-style Bundle v0.2 from any service.
+- Target repositories: agent-memory-api / agent-security-gateway / agent-budget-guard / arc_agent_payment_boundary_demo
+- Central map: https://ai-agent-payment-safety-stack.onrender.com/.well-known/external-control-materials.json
+- OKF-style bundle: https://ai-agent-payment-safety-stack.onrender.com/okf/index.md
+- Core gates: trust（Search Result Trust Check）/ execution（Tool Approval Check）/ payment（Payment Review）
+- Overall flow: Trust → Execution → Payment → Evidence
+- Scope: Documentation and agent-readable discovery links only. No new API, no endpoint change, no pricing change, no x402 manifest change, no DB change, no Render setting change, no existing paid endpoint change.
+- Notes: Do not imply official Google / OKF / Arc / Circle / Coinbase / Anthropic / OpenAI / Cursor / MCP partnership, certification, or standard compliance.
+- Implementation: README.md sections added to all 4 repositories with External Control Materials descriptions and cross-links
+- Status: ✅ Completed 2026-06-14

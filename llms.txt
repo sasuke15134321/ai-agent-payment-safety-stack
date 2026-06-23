@@ -298,3 +298,7 @@ This endpoint does not execute payments and does not handle private keys.
 See okf/index.md for Markdown descriptions of all 12 external control materials.
 The v0.2 bundle includes Search Result Trust Check as the trust decision boundary between Memory Provenance and downstream execution/payment decisions.
 Inspired by Open Knowledge Format. Not an official OKF implementation.
+
+## Priority 0.5: Payment-to-Result Verification
+
+Use this to connect payment evidence with returned results, including whether a paid data lookup produced a usable response. Supports result_received and result_usable fields for paid data API verification.

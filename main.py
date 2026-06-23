@@ -754,6 +754,12 @@ class PaymentEvidenceCheckRequest(BaseModel):
     payer_agent_id: Optional[str] = None
     request_id: Optional[str] = None
     task_id: Optional[str] = None
+    # Priority 0.5: paid data lookup result verification schema candidates
+    result_received: Optional[bool] = None
+    result_usable: Optional[bool] = None
+    result_summary: Optional[str] = None
+    provider: Optional[str] = None
+    resource_type: Optional[str] = None
 
 
 class PaymentEvidenceCheckResponse(BaseModel):
@@ -768,6 +774,9 @@ class PaymentEvidenceCheckResponse(BaseModel):
     request_id: Optional[str]
     task_id: Optional[str]
     created_at: str
+    payment_matched: Optional[bool] = None
+    result_received: Optional[bool] = None
+    result_usable: Optional[bool] = None
 
 
 class CounterpartyInvoiceCheckRequest(BaseModel):
@@ -1422,6 +1431,9 @@ async def check_payment_evidence(req: PaymentEvidenceCheckRequest, request: Requ
         request_id=req.request_id,
         task_id=req.task_id,
         created_at=datetime.now(timezone.utc).isoformat(),
+        payment_matched=payment_response_matched,
+        result_received=req.result_received,
+        result_usable=req.result_usable,
     )
 
 
