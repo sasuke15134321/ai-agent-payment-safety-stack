@@ -2954,6 +2954,16 @@ async def agent_json():
             "description": "OKF-compatible experimental Markdown bundle v0.2 mirroring External Control Materials Map v0.4. Includes Search Result Trust Check as the trust gate before tool execution and payment decisions. Contains 12 external control materials for AI-agent memory, search result trust, tool permission, approval, command execution, spending, payment, and evidence workflows.",
             "note": "Inspired by Open Knowledge Format. Not an official OKF implementation.",
         },
+        "paid_data_lookup_support": {
+            "role": "payment_to_result_evidence",
+            "purpose": "Record whether a paid data lookup produced a usable result after x402 settlement. Connects payment evidence with result_received and result_usable.",
+            "use_when": [
+                "an AI agent needs to verify that a paid data API returned a usable result",
+                "payment-to-result evidence is needed for audit",
+                "result_received and result_usable need to be recorded",
+            ],
+            "key_fields": ["result_received", "result_usable", "result_summary", "payment_intent_id", "tx_hash"],
+        },
     }
 
 
