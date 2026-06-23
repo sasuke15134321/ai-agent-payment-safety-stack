@@ -42,7 +42,8 @@ app = FastAPI(
         "human decision contracts (Approval Units). "
         "Approval Unit = Human Decision Contract. "
         "v0.1 is build-only: no approval execution, blockchain transactions, or payments. "
-        "Also includes AI-readable guidance for Agent Action Atom and Agent Payment Action Record to help describe, audit, and review AI-agent payment decisions."
+        "Also includes AI-readable guidance for Agent Action Atom and Agent Payment Action Record to help describe, audit, and review AI-agent payment decisions. "
+        "Also supports payment-to-result verification for paid data API calls, including result_received and result_usable tracking."
     ),
 )
 
@@ -2219,6 +2220,10 @@ Expected result (after x402 payment):
 - recommended_human_action
 - allowed_actions limited to staging scope
 - still_blocked_actions includes deploy_to_production
+
+## Priority 0.5: Payment-to-Result Verification
+
+Use this to connect payment evidence with returned results, including whether a paid data lookup produced a usable response. Supports result_received and result_usable fields for paid data API verification.
 """
     return PlainTextResponse(content)
 
