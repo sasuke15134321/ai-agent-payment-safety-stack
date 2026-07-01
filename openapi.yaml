@@ -23,9 +23,9 @@ paths:
     post:
       summary: Build a minimal human decision contract from an AI-generated candidate.
       description: >
-        Converts AI-generated findings, patches, payment requests, deployment proposals,
-        memory writes, tool execution requests, or decision-support outputs into a
-        minimal Approval Unit (Human Decision Contract).
+        Use before payment or execution. Converts AI-generated findings, patches,
+        payment requests, deployment proposals, memory writes, tool execution requests,
+        or decision-support outputs into a minimal Approval Unit (Human Decision Contract).
 
         The Approval Unit defines:
         - what the human is being asked to approve

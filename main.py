@@ -64,8 +64,9 @@ _PAID_ENDPOINTS = {
 
 _ENDPOINT_DESCRIPTIONS = {
     "/api/approval-unit/build": (
-        "Build a minimal human decision contract from AI-generated findings, patches, "
-        "payment requests, or decision-support outputs."
+        "Build a minimal human decision contract before payment or execution. "
+        "Converts AI-generated findings, patches, payment requests, or decision-support outputs "
+        "into an Approval Unit."
     ),
     "/api/payment-evidence/check": (
         "Verify that an AI-agent payment produced the expected service response and audit evidence."

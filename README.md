@@ -765,6 +765,41 @@ AIエージェントがツール実行・API利用・ステーブルコイン決
 
 ---
 
+## Recommended buyer flow
+
+ai-agent-payment-safety-stack is a payment safety API set for AI agents and buyers.
+
+Use the endpoints in this order:
+
+1. POST /api/approval-unit/build
+
+   Build the approval unit before payment or execution.
+
+   This defines what the agent is asking to approve.
+
+2. POST /api/counterparty-invoice/check
+
+   Check the counterparty and invoice context before payment.
+
+   This helps reduce unclear counterparties, invoice mismatch, and payment purpose drift.
+
+3. POST /api/payment-evidence/check
+
+   Verify payment evidence after payment or settlement.
+
+   This helps connect payment, invoice, approval, settlement, accounting, and later audit.
+
+If any paid endpoint returns 402 Payment Required:
+
+1. Read the x402 payment requirements returned by the API.
+2. Pay using a compatible x402 client.
+3. Retry the same request after payment.
+4. Use the returned decision or evidence result before continuing the agent workflow.
+
+Do not continue the downstream agent workflow until the required approval, counterparty/invoice check, or payment evidence check has returned a valid result.
+
+---
+
 ## JP Local Agent Payment Control Pack v1.0
 
 3 Live APIs for Japanese AI agent payment governance.
