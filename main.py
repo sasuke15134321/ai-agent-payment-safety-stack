@@ -653,7 +653,7 @@ def _sha256(data: dict) -> str:
 @app.post("/api/approval-unit/build", response_model=ApprovalUnitBuildResponse)
 async def build_approval_unit(req: ApprovalUnitBuildRequest, request: Request):
     """
-    Build a minimal Approval Unit (Human Decision Contract) from an AI-generated output.
+    Use before payment or execution. Build a minimal Approval Unit (Human Decision Contract) from an AI-generated output.
 
     Approval Unit = Human Decision Contract.
     Defines what the human is approving, what becomes allowed after approval,
@@ -2225,6 +2225,30 @@ Expected result (after x402 payment):
 ## Priority 0.5: Payment-to-Result Verification
 
 Use this to connect payment evidence with returned results, including whether a paid data lookup produced a usable response. Supports result_received and result_usable fields for paid data API verification.
+
+## Recommended buyer flow
+
+Use ai-agent-payment-safety-stack as a payment safety API set.
+
+Recommended order:
+
+1. POST /api/approval-unit/build
+   Build the approval unit before payment or execution.
+
+2. POST /api/counterparty-invoice/check
+   Check counterparty and invoice context before payment.
+
+3. POST /api/payment-evidence/check
+   Verify payment evidence after payment or settlement.
+
+If you receive 402 Payment Required:
+
+1. Read the x402 payment requirements returned by the API.
+2. Pay using a compatible x402 client.
+3. Retry the same request after payment.
+4. Use the returned decision or evidence result before continuing the agent workflow.
+
+Do not continue the downstream agent workflow until the relevant check returns a valid result.
 """
     return PlainTextResponse(content)
 
