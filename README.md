@@ -195,6 +195,23 @@ Generates:
 
 **x402 status:** verify + settle confirmed ✅
 
+Confirmed settlements:
+- /api/payment-evidence/check
+  verify status=200 isValid=True / settle status=200 success=True
+  Amount: 0.03 USDC
+  tx: 0x17b6f7cefa4f184b78dac9d8f745ea93dc8407122628145f7c907d937a402075
+  Timestamp: 2026-07-08T09:08:58Z
+  Settled via CDP Facilitator on Base mainnet（eip155:8453）
+
+- /api/approval-unit/build
+  verify status=200 isValid=True / settle status=200 success=True
+  Amount: 0.05 USDC
+  tx: 0x382552e974a2058cb696b79d072a2fe4265f306acf5120048deb2b19e6791042
+  Timestamp: 2026-07-08T09:14:53Z
+  Settled via CDP Facilitator on Base mainnet（eip155:8453）
+
+- /api/counterparty-invoice/check: not yet confirmed
+
 **Docs:** https://ai-agent-payment-safety-stack.onrender.com/docs
 
 **CDP Bazaar:** Automatic indexing in progress
