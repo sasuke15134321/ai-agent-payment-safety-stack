@@ -762,6 +762,12 @@ class PaymentEvidenceCheckRequest(BaseModel):
     result_summary: Optional[str] = None
     provider: Optional[str] = None
     resource_type: Optional[str] = None
+    correlation_id: Optional[str] = Field(
+        default=None,
+        max_length=128,
+        pattern=r"^[a-zA-Z0-9_\-\.]+$",
+        description="Client-provided series label for cross-stage correlation. Optional. Echoed in response and logged. Not a unique or authenticated identifier.",
+    )
 
 
 class PaymentEvidenceCheckResponse(BaseModel):
@@ -779,6 +785,7 @@ class PaymentEvidenceCheckResponse(BaseModel):
     payment_matched: Optional[bool] = None
     result_received: Optional[bool] = None
     result_usable: Optional[bool] = None
+    correlation_id: Optional[str] = None
 
 
 class CounterpartyInvoiceCheckRequest(BaseModel):
@@ -1421,6 +1428,8 @@ async def check_payment_evidence(req: PaymentEvidenceCheckRequest, request: Requ
     requires_human_review = (status != "ok")
     recommended_next_step = _pe_recommended_next_step(status)
 
+    print(f"[payment-evidence-check] request_id={req.request_id} payer_agent_id={req.payer_agent_id} correlation_id={req.correlation_id}")
+
     return PaymentEvidenceCheckResponse(
         payment_evidence_status=status,
         service_response_received=req.service_response_received,
@@ -1436,6 +1445,7 @@ async def check_payment_evidence(req: PaymentEvidenceCheckRequest, request: Requ
         payment_matched=payment_response_matched,
         result_received=req.result_received,
         result_usable=req.result_usable,
+        correlation_id=req.correlation_id,
     )
 
 
