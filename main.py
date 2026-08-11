@@ -1679,6 +1679,9 @@ class PaymentReviewCheckRequest(BaseModel):
     requested_tool: Optional[str] = None
     context_state: Optional[PaymentContextStateInput] = None
     policy: Optional[PaymentPolicyInput] = None
+    authority_claim: Optional[str] = None
+    authority_provenance: Optional[str] = None
+    authority_verification_status: Optional[str] = None
 
 
 _INJECTION_PATTERNS = [
@@ -1696,6 +1699,22 @@ _INJECTION_PATTERNS = [
 _DANGEROUS_TOOLS = {"wallet_execution", "private_key_access", "credential_access"}
 
 
+def _evaluate_execution_authority(
+    claim: Optional[str],
+    provenance: Optional[str],
+    verification: Optional[str],
+) -> dict:
+    if claim is None and provenance is None and verification is None:
+        return {"authority_check": "not_applied", "effective_execution_authority": None, "reason_code": None}
+    if claim == "denied":
+        return {"authority_check": "deny", "effective_execution_authority": "denied", "reason_code": "EXECUTION_AUTHORITY_EXPLICITLY_DENIED"}
+    if claim == "granted" and provenance == "trusted_external" and verification == "verified":
+        return {"authority_check": "pass", "effective_execution_authority": "granted", "reason_code": None}
+    if claim == "granted" and provenance == "caller_asserted" and verification == "unverified":
+        return {"authority_check": "review_required", "effective_execution_authority": "not_established", "reason_code": "EXECUTION_AUTHORITY_UNVERIFIED"}
+    return {"authority_check": "review_required", "effective_execution_authority": "not_established", "reason_code": "EXECUTION_AUTHORITY_NOT_ESTABLISHED"}
+
+
 @app.post("/api/payment-review/check", include_in_schema=False)
 async def payment_review_check(req: PaymentReviewCheckRequest):
     policy = req.policy or PaymentPolicyInput()
@@ -1705,6 +1724,10 @@ async def payment_review_check(req: PaymentReviewCheckRequest):
     input_dict = req.model_dump()
     input_json = json.dumps(input_dict, sort_keys=True, default=str)
     input_hash = hashlib.sha256(input_json.encode()).hexdigest()
+
+    auth_eval = _evaluate_execution_authority(
+        req.authority_claim, req.authority_provenance, req.authority_verification_status
+    )
 
     checks = []
     deny_reasons = []
@@ -1781,6 +1804,18 @@ async def payment_review_check(req: PaymentReviewCheckRequest):
             checks.append({"name": "requested_tool_check", "result": "review_required", "reason": f"Requested tool '{req.requested_tool}' may be a paid API"})
             review_reasons.append("requested tool may be paid API")
 
+    # --- authority check ---
+    if auth_eval["authority_check"] == "not_applied":
+        checks.append({"name": "authority_check", "result": "not_applied", "reason": "No authority fields supplied"})
+    elif auth_eval["authority_check"] == "pass":
+        checks.append({"name": "authority_check", "result": "pass", "reason": "Trusted external authority classification accepted"})
+    elif auth_eval["authority_check"] == "deny":
+        checks.append({"name": "authority_check", "result": "deny", "reason": auth_eval["reason_code"]})
+        deny_reasons.append(auth_eval["reason_code"])
+    else:
+        checks.append({"name": "authority_check", "result": "review_required", "reason": auth_eval["reason_code"]})
+        review_reasons.append(auth_eval["reason_code"])
+
     # --- decide ---
     if deny_reasons:
         decision = "deny"
@@ -1848,6 +1883,14 @@ async def payment_review_check(req: PaymentReviewCheckRequest):
             "input_hash": input_hash,
             "human_review_required": human_review_required,
             "checks_performed": [c["name"] for c in checks],
+            "authority_evaluation": {
+                "authority_check": auth_eval["authority_check"],
+                "effective_execution_authority": auth_eval["effective_execution_authority"],
+                "authority_claim": req.authority_claim,
+                "authority_provenance": req.authority_provenance,
+                "authority_verification_status": req.authority_verification_status,
+                "reason_code": auth_eval["reason_code"],
+            },
         },
         "agent_action_atom": {
             "atom_type": "payment_review_created",
