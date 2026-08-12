@@ -26,7 +26,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
-from payment_verifier import PaymentVerifier
+from payment_verifier import PaymentVerifier, _check_transaction_reality
 
 WALLET_ADDRESS = os.getenv("WALLET_ADDRESS", "0x60c402878EfcEcAe5733A88075328Aa2320C39BE")
 TEST_MODE = os.getenv("TEST_MODE", "false").lower() == "true"
@@ -769,6 +769,8 @@ class PaymentEvidenceCheckRequest(BaseModel):
         pattern=r"^[a-zA-Z0-9_\-\.]+$",
         description="Client-provided series label for cross-stage correlation. Optional. Echoed in response and logged. Not a unique or authenticated identifier.",
     )
+    transaction_hash: Optional[str] = None
+    network: Optional[str] = None
 
 
 class PaymentEvidenceCheckResponse(BaseModel):
@@ -787,6 +789,7 @@ class PaymentEvidenceCheckResponse(BaseModel):
     result_received: Optional[bool] = None
     result_usable: Optional[bool] = None
     correlation_id: Optional[str] = None
+    transaction_reality: Optional[Dict[str, Any]] = None
 
 
 class CounterpartyInvoiceCheckRequest(BaseModel):
@@ -1431,6 +1434,28 @@ async def check_payment_evidence(req: PaymentEvidenceCheckRequest, request: Requ
 
     print(f"[payment-evidence-check] request_id={req.request_id} payer_agent_id={req.payer_agent_id} correlation_id={req.correlation_id}")
 
+    # Layer 2: Transaction Reality Check (independent of Layer 1)
+    _SUPPORTED_NETWORK = "eip155:8453"
+    if req.transaction_hash is None:
+        transaction_reality = {"state": "not_applied"}
+    elif req.network is not None and req.network != _SUPPORTED_NETWORK:
+        transaction_reality = {
+            "state": "NOT_ESTABLISHED",
+            "transaction_hash": req.transaction_hash,
+            "network": req.network,
+            "reason_code": "unsupported_network",
+        }
+    else:
+        raw = _check_transaction_reality(req.transaction_hash)
+        transaction_reality = {
+            "state": raw["transaction_reality"],
+            "transaction_hash": raw["transaction_hash"],
+            "network": raw["network"],
+            "status": raw["status"],
+            "block_number": raw["block_number"],
+            "reason_code": raw["reason_code"],
+        }
+
     return PaymentEvidenceCheckResponse(
         payment_evidence_status=status,
         service_response_received=req.service_response_received,
@@ -1447,6 +1472,7 @@ async def check_payment_evidence(req: PaymentEvidenceCheckRequest, request: Requ
         result_received=req.result_received,
         result_usable=req.result_usable,
         correlation_id=req.correlation_id,
+        transaction_reality=transaction_reality,
     )
 
 

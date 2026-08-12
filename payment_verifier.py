@@ -172,6 +172,66 @@ def _get_embedded_facilitator():
         return None
 
 
+# ── Transaction Reality Check ─────────────────────────────────────────────────
+
+def _check_transaction_reality(tx_hash: str) -> dict:
+    """Read-only RPC lookup: classify the on-chain reality of a transaction.
+
+    States:
+      CONFIRMED       — receipt present, status == 1, blockNumber present
+      REVERTED        — receipt present, status == 0 (never rounded to INDETERMINATE)
+      NOT_FOUND       — receipt absent (unknown or still pending)
+      NOT_ESTABLISHED — RPC timeout / network error / provider unavailable
+    """
+    result = {
+        "transaction_reality": "NOT_ESTABLISHED",
+        "transaction_hash": tx_hash,
+        "network": _NETWORK,
+        "status": None,
+        "block_number": None,
+        "reason_code": "rpc_not_called",
+        "rpc_source": BASE_RPC_URL,
+    }
+
+    try:
+        from web3 import Web3
+
+        w3 = Web3(Web3.HTTPProvider(BASE_RPC_URL, request_kwargs={"timeout": 10}))
+        receipt = w3.eth.get_transaction_receipt(tx_hash)
+
+        if receipt is None:
+            result["transaction_reality"] = "NOT_FOUND"
+            result["reason_code"] = "receipt_not_found"
+            return result
+
+        status = receipt.get("status")
+        block_number = receipt.get("blockNumber")
+
+        if status == 1 and block_number is not None:
+            result["transaction_reality"] = "CONFIRMED"
+            result["status"] = status
+            result["block_number"] = block_number
+            result["reason_code"] = "receipt_confirmed"
+        elif status == 0:
+            result["transaction_reality"] = "REVERTED"
+            result["status"] = status
+            result["block_number"] = block_number
+            result["reason_code"] = "receipt_reverted"
+        else:
+            result["transaction_reality"] = "NOT_ESTABLISHED"
+            result["status"] = status
+            result["block_number"] = block_number
+            result["reason_code"] = "receipt_status_unknown"
+
+        return result
+
+    except Exception as e:
+        print(f"[WARN] _check_transaction_reality RPC error: {e}")
+        result["transaction_reality"] = "NOT_ESTABLISHED"
+        result["reason_code"] = "rpc_error"
+        return result
+
+
 # ── PaymentVerifier ───────────────────────────────────────────────────────────
 
 class PaymentVerifier:
