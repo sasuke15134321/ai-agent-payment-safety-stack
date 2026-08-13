@@ -251,6 +251,18 @@ class PaymentVerifier:
             print("[WARN] Could not decode payment header")
             return False
 
+        # [OBS] decoded header structure (no secrets)
+        _obs_keys = list(payload_dict.keys())
+        _obs_version = payload_dict.get("x402Version", 1)
+        _obs_accepted = payload_dict.get("accepted")
+        _obs_accepted_amount = _obs_accepted.get("amount") if isinstance(_obs_accepted, dict) else None
+        _obs_payload_exists = "payload" in payload_dict
+        print(f"[OBS] decoded top-level keys: {_obs_keys}")
+        print(f"[OBS] decoded x402Version: {_obs_version}")
+        print(f"[OBS] accepted exists: {'YES' if _obs_accepted is not None else 'NO'}")
+        print(f"[OBS] accepted.amount: {_obs_accepted_amount}")
+        print(f"[OBS] payload exists: {'YES' if _obs_payload_exists else 'NO'}")
+
         if payload_dict.get("x402Version", 1) == 2:
             return await self._verify_v2(payload_dict, wallet_address, expected_amount)
         return self._verify_legacy(payload_dict, wallet_address, expected_amount)
