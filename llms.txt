@@ -1,11 +1,36 @@
 # AI Agent Payment Safety Stack
 
-This project provides AI agent control primitives for paid API calls, budget checks,
-evidence review, gate routing, human review, and approval unit generation.
+Composable approval, payment-control, and evidence primitives
+for AI-agent actions.
+
+This service does not require every workflow to use every endpoint.
+
+Choose the entry point based on the current action state.
 
 ## Base URL
 
 https://ai-agent-payment-safety-stack.onrender.com
+
+## Choose the entry point
+
+If a human approval contract is needed:
+→ POST /api/approval-unit/build
+
+If an AI-generated remediation candidate must be checked first:
+→ POST /api/remediation/verify
+→ then POST /api/approval-unit/build when approval_unit_ready = true
+
+If an agent is preparing a payment:
+→ use the relevant pre-payment controls
+→ use counterparty/invoice checks when applicable
+→ use payment review when applicable
+
+If a payment or paid action already occurred:
+→ POST /api/payment-evidence/check
+→ build the relevant action/evidence record when needed
+
+If only a structured external record is needed:
+→ use the corresponding builder / Agent Action Atom / evidence packet endpoint
 
 ## Available API
 
@@ -303,20 +328,22 @@ Inspired by Open Knowledge Format. Not an official OKF implementation.
 
 Use this to connect payment evidence with returned results, including whether a paid data lookup produced a usable response. Supports result_received and result_usable fields for paid data API verification.
 
-## Recommended buyer flow
+## Recommended buyer flow (for workflows requiring human approval)
 
-Use ai-agent-payment-safety-stack as a payment safety API set.
+Use ai-agent-payment-safety-stack when human approval is required.
 
-Recommended order:
+Recommended order for human-approval workflows:
 
 1. POST /api/approval-unit/build
-   Build the approval unit before payment or execution.
+   Build the approval unit when a human decision contract is needed.
 
 2. POST /api/counterparty-invoice/check
    Check counterparty and invoice context before payment.
 
 3. POST /api/payment-evidence/check
    Verify payment evidence after payment or settlement.
+
+For other payment workflows, choose the entry point based on the current action state (see "Choose the entry point" section above).
 
 If you receive 402 Payment Required:
 
@@ -325,4 +352,8 @@ If you receive 402 Payment Required:
 3. Retry the same request after payment.
 4. Use the returned decision or evidence result before continuing the agent workflow.
 
-Do not continue the downstream agent workflow until the relevant check returns a valid result.
+When a workflow is configured to use a payment check,
+use its returned decision before continuing the corresponding
+downstream action.
+
+This API does not itself enforce that every workflow must call every check.
