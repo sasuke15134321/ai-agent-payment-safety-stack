@@ -7,3 +7,4 @@ x402[fastapi,evm]
 cryptography>=3.0.0
 eth-account>=0.10.0
 web3>=6.0.0
+mcp>=1.6.0
